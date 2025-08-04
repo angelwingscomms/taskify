@@ -44,7 +44,8 @@ https://svelte.dev/e/js_parse_error -->
 			let existing_task_index = i.tasks.findIndex((t) => t.i === data.i);
 			console.log(existing_task_index);
 			if (existing_task_index > -1) {
-				i.tasks[existing_task_index] = data;
+				const task = i.tasks[existing_task_index];
+				i.tasks[existing_task_index] = { ...task, ...data };
 			} else {
 				console.log('not exist');
 				i.tasks = [...i.tasks, data];
@@ -73,14 +74,14 @@ https://svelte.dev/e/js_parse_error -->
 	let tasks = $derived.by(() => {
 		return i.tasks.filter((t) => {
 			switch (i.mode) {
-				case 'important':
-					return t.important === 1 && t.trash !== 1;
-				case 'completed':
-					return t.completed === 1 && t.trash !== 1;
-				case 'trash':
-					return t.trash === 1;
+				case 'x':
+					return t.x === 1 && t.t !== 1;
+				case 'c':
+					return t.c === 1 && t.t !== 1;
+				case 't':
+					return t.t === 1;
 				default: // Covers mode === '' and any other cases
-					return t.trash !== 1;
+					return t.t !== 1;
 			}
 		});
 	});
@@ -91,11 +92,10 @@ https://svelte.dev/e/js_parse_error -->
 			alert('Please enter a task');
 		} else {
 			const task: _Task = {
-				name,
-				completed: 0,
-				important: 0,
-				trash: 0,
-				date: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
+				n: name,
+				c: 0,
+				t: 0,
+				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
 			// i.tasks = [task, ...i.tasks];
 			name = '';
@@ -127,35 +127,31 @@ https://svelte.dev/e/js_parse_error -->
 	}
 
 	// Delete a task
-	async function del(i: string) {
-		const taskToDelete = i.tasks.find((t) => t.i === i);
+	async function del(id: string) {
+		const taskToDelete = i.tasks.find((t) => t.i === id);
 		if (!taskToDelete) {
 			console.warn(`Attempted to delete non-existent task at index ${i}`);
 			return;
 		}
 
 		// Optimistically remove the task from the UI
-		tasks = i.tasks.filter((_, index) => index !== i);
+		// tasks = i.tasks.filter((_, index) => index !== i);
 
-		if (taskToDelete.id) {
-			// If the task has an ID, it's a server-synced task. Attempt to delete from backend.
+		if (taskToDelete.i) {
 			try {
-				// Send DELETE request to the server with the task ID in the request body
-				await axios.delete('/', { data: { id: taskToDelete.id } });
+				await axios.delete('/?i=' + id);
 			} catch (error) {
-				console.error('Failed to delete task from server:', error);
-				// If backend deletion fails, re-add the task to the UI and re-sort
-				tasks = [...tasks, taskToDelete].sort((a, b) => b.date - a.date);
-				alert('Failed to delete task from server. Please try again.');
+				console.error('Error deleting task:', error);
+				alert('Failed to delete task.');
 			}
 		} else {
 			// If the task does not have an ID, it's an unsynced offline task.
 			// It has already been removed from the `tasks` array.
 			// Now, remove it from the `$offlineTasks` store as well.
 			// This filters by object reference to ensure the exact pending task is removed.
-			$offlineTasks.update((currentOfflineTasks) =>
-				currentOfflineTasks.filter((offlineTask) => offlineTask !== taskToDelete)
-			);
+			// $offlineTasks.update((currentOfflineTasks) =>
+			// 	currentOfflineTasks.filter((offlineTask) => offlineTask !== taskToDelete)
+			// );
 		}
 	}
 
@@ -248,7 +244,7 @@ https://svelte.dev/e/js_parse_error -->
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
 		<ul class="task-list" bind:this={taskList}>
 			{#each tasks as task, i (task.i)}
-				<Task {task} {i} on:delete={() => del(i)} on:click={toggleTaskProp} />
+				<Task {task} {i} on:delete={() => del(task.i!)} on:click={toggleTaskProp} />
 			{/each}
 		</ul>
 	</OverlayScrollbarsComponent>

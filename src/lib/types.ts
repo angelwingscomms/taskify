@@ -1,9 +1,9 @@
 export type Task = {
-	completed: number;
-	name: string;
-	important: number;
-	trash: number;
-	date: number;
+	t?: number; // trash
+	c?: number; // completed
+	x?: number; // important
+	d: number; // date
+	n: string; // name
   s?: string; //tenant-id
   u?: string; //user
   i?: string; //id
@@ -14,9 +14,4 @@ export interface User {
 	p: string;
 }
 
-export interface TaskEvent {
-  d: Task,
-  t: 'a' | 'i'
-}
-
-export type Mode = 'trash' | 'important' | 'completed' | ''
+export type Mode = 't' | 'x' | 'c' | ''

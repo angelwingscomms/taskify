@@ -17,7 +17,7 @@ export function generateId(): string {
 	return uuidv7();
 }
 
-export const updateById = async (id: string, payload: Record<string, unknown>) => {
+export const set = async (id: string, payload: Record<string, unknown>) => {
 	await qdrant.setPayload('i', {
 		wait: true,
 		payload,
