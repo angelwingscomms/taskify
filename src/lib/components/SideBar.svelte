@@ -123,34 +123,34 @@
 				<span class="list-amount">{i.tasks.length}</span>
 			</a>
 			<a
-				onclick={() => (i.mode = 'important')}
+				onclick={() => (i.mode = 'x')}
 				href="#"
 				class="menu-items"
-				class:active={i.mode === 'important'}
+				class:active={i.mode === 'x'}
 			>
 				<i class="far fa-flag"></i>
 				<span class="menu-name">Important</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.important).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.x).length}</span>
 			</a>
 			<a
-				onclick={() => (i.mode = 'completed')}
+				onclick={() => (i.mode = 'c')}
 				href="#"
 				class="menu-items"
-				class:active={i.mode === 'completed'}
+				class:active={i.mode === 'c'}
 			>
 				<i class="far fa-circle-check"></i>
 				<span class="menu-name">Completed</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.completed).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.c).length}</span>
 			</a>
 			<a
-				onclick={() => (i.mode = 'trash')}
+				onclick={() => (i.mode = 't')}
 				href="#"
 				class="menu-items"
-				class:active={i.mode === 'trash'}
+				class:active={i.mode === 't'}
 			>
 				<i class="far fa-trash-can"></i>
 				<span class="menu-name">Trash</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.deleted).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.t).length}</span>
 			</a>
 			<hr />
 			<a href="#" class="menu-items">

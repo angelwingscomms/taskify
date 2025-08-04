@@ -7,6 +7,7 @@ import { get, set } from '$lib/db';
 import type { Task } from '$lib/types';
 import axios from 'axios';
 import { PUBLIC_WORKER } from '$env/static/public';
+import { error } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -14,7 +15,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('data', data);
 		data.u = locals.user.i;
 		data.s = task_tenant_id;
-		const i = v7();
+		const i = data.i;
+		delete data.i;
 		await client.upsert(collection, {
 			wait: true,
 			points: [
@@ -37,13 +39,13 @@ export const DELETE: RequestHandler = async ({ locals, url }) => {
 	try {
 		const i = url.searchParams.get('i');
 		if (!i) {
-			return new Response('Missing task ID', { status: 400 });
+			error(400, 'Missing task ID');
 		}
 
 		const task = await get<Task>(i);
 
 		if (!task) {
-			return new Response('Task not found', { status: 404 });
+			error(404, 'Task not found');
 		}
 
 		// Check ownership (u) and tenant scope (s)

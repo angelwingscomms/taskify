@@ -5,4 +5,4 @@
 	export let data: PageData
 
 </script>
-<Tasks tasks={data.t} />
+<Tasks t={data.t} />

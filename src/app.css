@@ -267,6 +267,11 @@ main {
 		height: min-content;
 	}
 }
+
+.offline-task {
+    background-color: var(--clr-main-dull);
+}
+
 .task-list {
 	overflow-y: auto;
 	overflow-x: hidden;

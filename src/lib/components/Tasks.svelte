@@ -4,12 +4,12 @@ https://svelte.dev/e/js_parse_error -->
 	import blankstate from '$lib/images/tasks-blankstate.png';
 	import { onMount } from 'svelte';
 	import axios from 'axios';
+	import {v7} from 'uuid';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
 	import {
 		searchInput,
-		offlineTasks,
 		breakpoint,
 		sidebarOverlay,
 		showPropSm,
@@ -26,7 +26,7 @@ https://svelte.dev/e/js_parse_error -->
 	let websocket: WebSocket | undefined = undefined;
 
 	let { t }: { t: _Task[] } = $props();
-
+	
 	// $offlineTasks = [];
 	i.tasks = t;
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
@@ -43,10 +43,12 @@ https://svelte.dev/e/js_parse_error -->
 		websocket.onmessage = (event) => {
 			console.log('event', event);
 			let data = JSON.parse(event.data);
+			console.log('event data', data);
 			let existing_task_index = i.tasks.findIndex((t) => t.i === data.i);
 			console.log(existing_task_index);
 			if (existing_task_index > -1) {
 				const task = i.tasks[existing_task_index];
+				if (task.o) delete task.o;
 				i.tasks[existing_task_index] = { ...task, ...data };
 			} else {
 				console.log('not exist');
@@ -74,7 +76,6 @@ https://svelte.dev/e/js_parse_error -->
 	});
 
 	let tasks = $derived.by(() => {
-		i.tasks = [...i.tasks, ...i.offline_tasks];
 		return i.tasks.filter((t) => {
 			switch (i.mode) {
 				case 'x':
@@ -98,18 +99,20 @@ https://svelte.dev/e/js_parse_error -->
 				n: name,
 				c: 0,
 				t: 0,
+				i: v7(),
+				o: true,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
 			i.tasks = [...i.tasks, task];
 			name = '';
 			$taskInput?.focus();
 			scrollContent(osTaskList);
-			
+
 			const maxRetries = 9; // Number of retries after the initial attempt
 			const initialDelayMs = 500; // Initial delay in milliseconds for retries
 			for (let attempt = 0; attempt <= maxRetries; attempt++) {
 				try {
-					await axios.post('/', task)
+					await axios.post('/', task);
 					break;
 				} catch (error) {
 					console.error(`Attempt ${attempt + 1} of ${maxRetries + 1} to add task failed:`, error);
@@ -120,7 +123,9 @@ https://svelte.dev/e/js_parse_error -->
 					} else {
 						// All retries exhausted, log the final failure.
 						// Original code had an empty catch, so we won't rethrow.
-						console.error('All attempts to add task failed. Task may not be synchronized with the server.');
+						console.error(
+							'All attempts to add task failed. Task may not be synchronized with the server.'
+						);
 					}
 				}
 			}

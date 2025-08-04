@@ -10,6 +10,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return { t };
 	} catch (e) {
 		console.error('/ error:', e);
-		error(500)
+		error(500);
 	}
 };

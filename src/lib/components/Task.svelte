@@ -6,7 +6,6 @@
 	import { breakpoint, taskDropdownOverlay } from '$lib/stores';
 	import type { Task } from '$lib/types';
 	import MoreActions from './MoreActions.svelte';
-	import { SvelteDate } from 'svelte/reactivity';
 	import { date_format } from '$lib/util/date_format';
 	interface Props {
 		task: Task;
@@ -53,7 +52,7 @@
 	});
 </script>
 
-<li onclick={self(bubble('click'))}>
+<li class:offline-task={task.o} onclick={self(bubble('click'))}>
 	<div>
 		<button
 			class="complete"
@@ -86,6 +85,7 @@
 		<div class="button-cont">
 			<button
 				onclick={(e) => {
+				task.x = +!task.x;
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"

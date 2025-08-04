@@ -7,7 +7,7 @@ export type Task = {
 	s?: string; //tenant-id
 	u?: string; //user
 	i?: string; //id
-	o?: string; //offline
+	o?: boolean; //offline
 };
 
 export interface User {
