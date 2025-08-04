@@ -2,7 +2,6 @@ import { writable } from 'svelte/store';
 import { arrayStore, numberStore, stringStore } from './utilities/store';
 import type { Task } from './types';
 
-
 export const searchInput = writable<HTMLInputElement | null>(null);
 export const taskInput = writable<HTMLInputElement | null>(null);
 export const showPD = writable<boolean>(false);
@@ -17,4 +16,3 @@ export const modalOpened = writable<boolean>(false);
 export const breakpoint = writable<MediaQueryList | null>(null);
 export const offlineTasks = arrayStore<Task>('offlineTasks', []);
 export const nextOfflineId = numberStore('nextOfflineId');
-

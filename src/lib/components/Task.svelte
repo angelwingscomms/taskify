@@ -10,8 +10,8 @@
 	interface Props {
 		task: Task;
 		i: number;
-		onclick: (e: Event) => void,
-		ondelete: (id: string) => Promise<void>
+		onclick: (e: Event) => void;
+		ondelete: (id: string) => Promise<void>;
 	}
 
 	let { task = $bindable(), i, onclick, ondelete }: Props = $props();
@@ -29,7 +29,13 @@
 	function mouseoutFunc() {
 		hover = false;
 	}
-	
+
+	const toggle_property = (task: Task, property: keyof Task) => {
+		if (!task.i) return;
+		task[property] = +!task[property];
+		axios.put('/?i=' + task.i, { [property]: task[property] });
+	};
+
 	let taskname: HTMLSpanElement | undefined = $state();
 
 	// Function to check for text wrapping and update styles
@@ -57,24 +63,22 @@
 		<button
 			class="complete"
 			onclick={(e) => {
+				toggle_property(task, 'c');
 				e.stopPropagation();
 			}}
 			onmouseover={mouseover}
 			onmouseout={mouseout}
 		>
-			<i
-				class={task.c
-					? 'fas fa-check-circle'
-					: hover
-						? 'far fa-circle-check'
-						: 'far fa-circle'}
+			<i class={task.c ? 'fas fa-check-circle' : hover ? 'far fa-circle-check' : 'far fa-circle'}
 			></i>
 		</button>
 
 		<span
 			class:line-through={task.c}
 			class:fade-text={task.c}
-			onclick={(event) => {if (event.target === event.currentTarget) onclick()}}
+			onclick={(event) => {
+				if (event.target === event.currentTarget) onclick();
+			}}
 			id="taskName"
 			bind:this={taskname}
 			class:mgTop0={wrapSwitch}
@@ -85,7 +89,7 @@
 		<div class="button-cont">
 			<button
 				onclick={(e) => {
-				task.x = +!task.x;
+					toggle_property(task, 'x');
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"
@@ -95,8 +99,7 @@
 			</button>
 			<button
 				onclick={(e) => {
-					task.t = +!task.t;
-					ondelete(task.i as string);
+					toggle_property(task, 't');
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"

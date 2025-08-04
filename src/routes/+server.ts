@@ -31,16 +31,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return new Response(i);
 	} catch (err) {
 		console.error(err);
-		return new Response('Error adding data to Qdrant', { status: 500 });
+		error(500, 'Error adding data to Qdrant');
 	}
 };
 
-export const DELETE: RequestHandler = async ({ locals, url }) => {
+export const PUT: RequestHandler = async ({ locals, url, request }) => {
 	try {
 		const i = url.searchParams.get('i');
 		if (!i) {
 			error(400, 'Missing task ID');
 		}
+		const data = await request.json(); // Expecting field like 'c' or 'x', and its new value
 
 		const task = await get<Task>(i);
 
@@ -50,49 +51,18 @@ export const DELETE: RequestHandler = async ({ locals, url }) => {
 
 		// Check ownership (u) and tenant scope (s)
 		if (task?.u !== locals.user.i || task?.s !== task_tenant_id) {
-			// Return 403 for unauthorized access, or 404 to avoid leaking information about existing IDs
-			return new Response('Unauthorized', { status: 403 });
-		}
-
-		await set(i, { t: 1 });
-		await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { t: 1, i });
-
-		return new Response('Task deleted successfully');
-	} catch (err) {
-		console.error(err);
-		return new Response('Error deleting data from Qdrant', { status: 500 });
-	}
-};
-
-export const PUT: RequestHandler = async ({ locals, url, request }) => {
-	try {
-		const i = url.searchParams.get('i');
-		const { field, value } = await request.json(); // Expecting field like 'c' or 'x', and its new value
-
-		if (!i) {
-			return new Response('Missing task ID', { status: 400 });
-		}
-
-		const task = await get<Task>(i);
-
-		if (!task) {
-			return new Response('Task not found', { status: 404 });
-		}
-
-		// Check ownership (u) and tenant scope (s)
-		if (task?.u !== locals.user.i || task?.s !== task_tenant_id) {
-			return new Response('Unauthorized', { status: 403 });
+			error(403, 'Unauthorized');
 		}
 
 		// Update the specific field
-		await set(i, { [field]: value });
+		await set(i, data);
 
 		// Send update to worker
-		await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { [field]: value, i });
+		await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', {...data, i});
 
 		return new Response('Task updated successfully');
 	} catch (err) {
 		console.error(err);
-		return new Response('Error updating data in Qdrant', { status: 500 });
+		error(500, 'We encountered an error');
 	}
 };

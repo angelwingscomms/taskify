@@ -4,7 +4,7 @@ https://svelte.dev/e/js_parse_error -->
 	import blankstate from '$lib/images/tasks-blankstate.png';
 	import { onMount } from 'svelte';
 	import axios from 'axios';
-	import {v7} from 'uuid';
+	import { v7 } from 'uuid';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
@@ -19,6 +19,7 @@ https://svelte.dev/e/js_parse_error -->
 	import type { Task as _Task } from '$lib/types';
 	import { PUBLIC_WORKER } from '$env/static/public';
 	import { i } from '$lib/i.svelte';
+	import { modes } from '$lib/constants';
 
 	let name = $state('');
 	let taskList: HTMLUListElement;
@@ -26,7 +27,7 @@ https://svelte.dev/e/js_parse_error -->
 	let websocket: WebSocket | undefined = undefined;
 
 	let { t }: { t: _Task[] } = $props();
-	
+
 	// $offlineTasks = [];
 	i.tasks = t;
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
@@ -260,8 +261,8 @@ https://svelte.dev/e/js_parse_error -->
 
 <div class="task-area-cont">
 	<div class="task-header">
-		<span class="material-symbols-rounded header-icon">checklist</span>
-		<span class="header-span">Tasks</span>
+		<i class="{modes[i.mode].icon_classes} header-icon"></i>
+		<span class="header-span">{modes[i.mode].text}</span>
 	</div>
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>

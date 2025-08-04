@@ -257,10 +257,10 @@ main {
 
 	.header-icon {
 		margin-right: 10px;
-		font-size: 41px;
+		font-size: 36px;
 		font-variation-settings:
 			'wght' 500,
-			'opsz' 41;
+			'opsz' 36;
 	}
 	.header-span {
 		font-size: 29px;
@@ -825,8 +825,8 @@ aside {
 			width: 34px;
 		}
 		.header-icon {
-			font-size: 40px;
-			font-variation-settings: 'opsz' 40;
+			font-size: 36px;
+			font-variation-settings: 'opsz' 36;
 		}
 		.header-span {
 			font-size: 27px;

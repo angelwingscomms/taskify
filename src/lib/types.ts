@@ -15,4 +15,4 @@ export interface User {
 	p: string;
 }
 
-export type Mode = 't' | 'x' | 'c' | '';
+export type Mode = 't' | 'x' | 'c' | 'a';

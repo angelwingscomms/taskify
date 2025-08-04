@@ -15,6 +15,7 @@
 	} from '$lib/stores';
 	import { page } from '$app/state';
 	import { i } from '$lib/i.svelte';
+	import { modes } from '$lib/constants';
 	let searchValue = $state('');
 	function showProfileDB() {
 		$showPD = !$showPD;
@@ -117,41 +118,13 @@
 		defer
 	>
 		<div class="aside-middle" bind:this={asideMid} onscroll={handleAsideScroll}>
-			<a onclick={() => (i.mode = '')} href="#" class="menu-items" class:active={i.mode === ''}>
-				<i class="fas fa-list-check"></i>
-				<span class="menu-name">Tasks</span>
-				<span class="list-amount">{i.tasks.length}</span>
-			</a>
-			<a
-				onclick={() => (i.mode = 'x')}
-				href="#"
-				class="menu-items"
-				class:active={i.mode === 'x'}
-			>
-				<i class="far fa-flag"></i>
-				<span class="menu-name">Important</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.x).length}</span>
-			</a>
-			<a
-				onclick={() => (i.mode = 'c')}
-				href="#"
-				class="menu-items"
-				class:active={i.mode === 'c'}
-			>
-				<i class="far fa-circle-check"></i>
-				<span class="menu-name">Completed</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.c).length}</span>
-			</a>
-			<a
-				onclick={() => (i.mode = 't')}
-				href="#"
-				class="menu-items"
-				class:active={i.mode === 't'}
-			>
-				<i class="far fa-trash-can"></i>
-				<span class="menu-name">Trash</span>
-				<span class="list-amount">{i.tasks.filter((t) => t.t).length}</span>
-			</a>
+			{#each Object.entries(modes) as [mode, v] (mode)}
+				<a onclick={() => (i.mode = mode)} href="#" class="menu-items" class:active={i.mode === mode}>
+					<i class={v.icon_classes}></i>
+					<span class="menu-name">{v.text}</span>
+					<span class="list-amount">{i.tasks.filter((t) => t[mode]).length}</span>
+				</a>
+			{/each}
 			<hr />
 			<a href="#" class="menu-items">
 				<i class="fas fa-bars"></i>
