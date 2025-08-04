@@ -8,6 +8,7 @@ import type { Task } from '$lib/types';
 import axios from 'axios';
 import { PUBLIC_WORKER } from '$env/static/public';
 import { error } from '@sveltejs/kit';
+import { internal_error } from '$lib/util/internal_error';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -31,17 +32,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return new Response(i);
 	} catch (err) {
 		console.error(err);
-		error(500, 'Error adding data to Qdrant');
+		internal_error();
 	}
 };
 
 export const PUT: RequestHandler = async ({ locals, url, request }) => {
 	try {
-		const i = url.searchParams.get('i');
-		if (!i) {
+		const data = await request.json(); // Expecting field like 'c' or 'x', and its new value
+		console.log(data);
+
+		if (data.i == null) {
 			error(400, 'Missing task ID');
 		}
-		const data = await request.json(); // Expecting field like 'c' or 'x', and its new value
+
+		const i = data.i;
+		delete data.i;
 
 		const task = await get<Task>(i);
 
@@ -58,11 +63,11 @@ export const PUT: RequestHandler = async ({ locals, url, request }) => {
 		await set(i, data);
 
 		// Send update to worker
-		await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', {...data, i});
+		// await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', {...data, i});
 
 		return new Response('Task updated successfully');
 	} catch (err) {
 		console.error(err);
-		error(500, 'We encountered an error');
+		internal_error();
 	}
 };

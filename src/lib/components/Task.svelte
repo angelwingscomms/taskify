@@ -4,17 +4,17 @@
 
 	const bubble = createBubbler();
 	import { breakpoint, taskDropdownOverlay } from '$lib/stores';
-	import type { Task } from '$lib/types';
+	import type { Mode, Task } from '$lib/types';
 	import MoreActions from './MoreActions.svelte';
 	import { date_format } from '$lib/util/date_format';
 	interface Props {
 		task: Task;
 		i: number;
+		websocket: WebSocket | undefined;
 		onclick: (e: Event) => void;
-		ondelete: (id: string) => Promise<void>;
 	}
 
-	let { task = $bindable(), i, onclick, ondelete }: Props = $props();
+	let { task = $bindable(), websocket, i, onclick }: Props = $props();
 	let hover = $state(false);
 	let show_ma = false;
 	// function showMoreActions(e) {
@@ -30,10 +30,12 @@
 		hover = false;
 	}
 
-	const toggle_property = (task: Task, property: keyof Task) => {
-		if (!task.i) return;
+	const toggle_property = (task: Task, property: Omit<Mode, 'a'>) => {
 		task[property] = +!task[property];
-		axios.put('/?i=' + task.i, { [property]: task[property] });
+		if (!task.i || !websocket) return;
+		let data = { [property]: task[property], i: task.i };
+		websocket.send(JSON.stringify(data));
+		axios.put('/', data);
 	};
 
 	let taskname: HTMLSpanElement | undefined = $state();

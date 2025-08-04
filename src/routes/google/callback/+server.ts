@@ -1,10 +1,11 @@
 import { createSession, google, setSessionTokenCookie } from '$lib/server/auth';
 import { decodeIdToken } from 'arctic';
 
-import { redirect, type RequestEvent } from '@sveltejs/kit';
+import { error, redirect, type RequestEvent } from '@sveltejs/kit';
 import type { OAuth2Tokens } from 'arctic';
 import { create_user } from '$lib/auth';
 import { searchByPayload } from '$lib/db';
+import { internal_error } from '$lib/util/internal_error'
 import type { User } from '$lib/types';
 
 export async function GET(event: RequestEvent): Promise<Response> {
@@ -17,14 +18,10 @@ export async function GET(event: RequestEvent): Promise<Response> {
 	// console.log('storedState:', storedState);
 	// console.log('codeVerifier:', codeVerifier);
 	if (code === null || state === null || storedState === null || codeVerifier === null) {
-		return new Response(null, {
-			status: 400
-		});
+	error(400)
 	}
 	if (state !== storedState) {
-		return new Response(null, {
-			status: 400
-		});
+	error(400)
 	}
 
 	let tokens: OAuth2Tokens;
@@ -33,9 +30,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 	} catch {
 		// Invalid code or client credentials
 		console.error('Invalid code or client credentials');
-		return new Response(null, {
-			status: 400
-		});
+		error(400)
 	}
 	const res = decodeIdToken(tokens.idToken()) as {
 		sub: string;
@@ -66,7 +61,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 
 	// Create new user
 
-	if (!user) return new Response(null, { status: 500 });
+	if (!user) internal_error()
 
 	const sessionToken = await createSession(user.i as string);
 

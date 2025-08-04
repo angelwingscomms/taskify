@@ -44,7 +44,6 @@ https://svelte.dev/e/js_parse_error -->
 		websocket.onmessage = (event) => {
 			console.log('event', event);
 			let data = JSON.parse(event.data);
-			console.log('event data', data);
 			let existing_task_index = i.tasks.findIndex((t) => t.i === data.i);
 			console.log(existing_task_index);
 			if (existing_task_index > -1) {
@@ -52,10 +51,8 @@ https://svelte.dev/e/js_parse_error -->
 				if (task.o) delete task.o;
 				i.tasks[existing_task_index] = { ...task, ...data };
 			} else {
-				console.log('not exist');
 				i.tasks = [...i.tasks, data];
 			}
-			console.log('s', i.tasks, tasks);
 		};
 
 		// Connection closed
@@ -74,21 +71,6 @@ https://svelte.dev/e/js_parse_error -->
 		// 		websocket = undefined; // Clear the socket reference
 		// 	}
 		// };
-	});
-
-	let tasks = $derived.by(() => {
-		return i.tasks.filter((t) => {
-			switch (i.mode) {
-				case 'x':
-					return t.x === 1 && t.t !== 1;
-				case 'c':
-					return t.c === 1 && t.t !== 1;
-				case 't':
-					return t.t === 1;
-				default: // Covers mode === '' and any other cases
-					return t.t !== 1;
-			}
-		});
 	});
 
 	// Add a task
@@ -237,7 +219,7 @@ https://svelte.dev/e/js_parse_error -->
 <svelte:window
 	on:keydown={(e) => {
 		if (
-			e.key.match(/^[a-zA-Z0-9\/]$/) &&
+			e.key.match(/^[a-zA-Z0-9/]$/) &&
 			document.activeElement !== $taskInput &&
 			document.activeElement !== $searchInput
 		) {
@@ -267,8 +249,8 @@ https://svelte.dev/e/js_parse_error -->
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
 		<ul class="task-list" bind:this={taskList}>
-			{#each tasks as task, i (task.i)}
-				<Task {task} {i} ondelete={() => del(task.i!)} onclick={toggleTaskProp} />
+			{#each i[i.mode] as task, i (task.i)}
+				<Task {websocket} {task} {i} onclick={toggleTaskProp} />
 			{/each}
 		</ul>
 	</OverlayScrollbarsComponent>

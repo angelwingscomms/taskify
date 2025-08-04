@@ -2,8 +2,6 @@
 	import { run, createBubbler, stopPropagation, handlers } from 'svelte/legacy';
 
 	const bubble = createBubbler();
-	import wolf from '$lib/images/wolf(circle).png';
-	import homeIcon from '$lib/images/home-iconfont.svg';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import {
 		breakpoint,
@@ -14,9 +12,12 @@
 		sideBarOpen
 	} from '$lib/stores';
 	import { page } from '$app/state';
-	import { i } from '$lib/i.svelte';
 	import { modes } from '$lib/constants';
+	import { i } from '$lib/i.svelte';
+	
 	let searchValue = $state('');
+	
+	
 	function showProfileDB() {
 		$showPD = !$showPD;
 	}
@@ -122,7 +123,7 @@
 				<a onclick={() => (i.mode = mode)} href="#" class="menu-items" class:active={i.mode === mode}>
 					<i class={v.icon_classes}></i>
 					<span class="menu-name">{v.text}</span>
-					<span class="list-amount">{i.tasks.filter((t) => t[mode]).length}</span>
+					<span class="list-amount">{i[mode].length}</span>
 				</a>
 			{/each}
 			<hr />
