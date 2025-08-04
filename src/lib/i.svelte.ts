@@ -4,7 +4,7 @@ class App {
 	tasks: Task[] = $state([]);
 	mode: Mode = $state('a');
 	x: Task[] = $derived.by(() => {
-		return i.tasks.filter((t) => !t.t && t.x);
+		return i.tasks.filter((t) => !t.t && !t.c && t.x);
 	});
 	c: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && t.c);
