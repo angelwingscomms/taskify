@@ -48,7 +48,7 @@ https://svelte.dev/e/js_parse_error -->
 			console.log(existing_task_index);
 			if (existing_task_index > -1) {
 				const task = i.tasks[existing_task_index];
-				if (task.o) delete task.o;
+				if (!data.o && task.o) delete task.o;
 				i.tasks[existing_task_index] = { ...task, ...data };
 			} else {
 				i.tasks = [...i.tasks, data];
@@ -80,12 +80,11 @@ https://svelte.dev/e/js_parse_error -->
 		} else {
 			const task: _Task = {
 				n: name,
-				c: 0,
-				t: 0,
 				i: v7(),
 				o: true,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
+			if (websocket) websocket.send(task)
 			i.tasks = [...i.tasks, task];
 			name = '';
 			$taskInput?.focus();

@@ -15,14 +15,11 @@
 	import { modes } from '$lib/constants';
 	import { i } from '$lib/i.svelte';
 	
-	let searchValue = $state('');
-	
-	
 	function showProfileDB() {
 		$showPD = !$showPD;
 	}
 	function clearSearchInput() {
-		searchValue = '';
+		i.search = '';
 		$searchInput?.focus();
 	}
 	function openModal() {
@@ -99,14 +96,15 @@
 			<input
 				type="search"
 				id="search-input"
+				oninput={() => i.mode = 's'}
 				placeholder="Search"
-				bind:value={searchValue}
+				bind:value={i.search}
 				bind:this={$searchInput}
 			/>
-			{#if !searchValue}
+			{#if !i.search}
 				<span aria-label="ctrlk">CTRL+K</span>
 			{/if}
-			{#if searchValue}
+			{#if i.search}
 				<button onclick={handlers(stopPropagation(bubble('click')), clearSearchInput)}
 					><i id="clear-search" class="fas fa-xmark"></i></button
 				>

@@ -16,6 +16,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('data', data);
 		data.u = locals.user.i;
 		data.s = task_tenant_id;
+		if (!data.i) error(400, 'missing i')
 		const i = data.i;
 		delete data.i;
 		await client.upsert(collection, {
@@ -28,7 +29,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				}
 			]
 		});
-		await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { ...data, i });
+		// await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { ...data, i });
 		return new Response(i);
 	} catch (err) {
 		console.error(err);
