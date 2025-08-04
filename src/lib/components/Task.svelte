@@ -12,7 +12,7 @@
 		i: number;
 	}
 
-	let { task = $bindable(), i }: Props = $props();
+	let { task = $bindable(), i, onClick }: Props = $props();
 	let hover = $state(false);
 	let show_ma = false;
 	function showMoreActions(e) {
@@ -123,7 +123,7 @@
 		<span
 			class:line-through={task.completed}
 			class:fade-text={task.completed}
-			on:click|self
+			onclick={(event) => {if (event.target === event.currentTarget) onClick()}}
 			id="taskName"
 			bind:this={taskname}
 			class:mgTop0={wrapSwitch}
