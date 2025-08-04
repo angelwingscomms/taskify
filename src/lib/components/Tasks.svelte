@@ -17,18 +17,20 @@ https://svelte.dev/e/js_parse_error -->
 		taskInput
 	} from '$lib/stores';
 	import type { Task as _Task } from '$lib/types';
-	import type { PageData } from './$types';
 	import { PUBLIC_WORKER } from '$env/static/public';
-	import { i } from '$lib/i.svelte.ts';
+	import { i } from '$lib/i.svelte';
 
-	// $offlineTasks = [];
-	// let tasks: _Task[] = data.tasks;
-	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.date - a.date)
-	// // : $offlineTasks.sort((a, b) => b.date - a.date);
 	let name = $state('');
 	let taskList: HTMLUListElement;
 	let osTaskList: OverlayScrollbarsComponent;
 	let websocket: WebSocket | undefined = undefined;
+
+	let { t }: { t: _Task[] } = $props();
+
+	// $offlineTasks = [];
+	i.tasks = t;
+	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
+	// // : $offlineTasks.sort((a, b) => b.d - a.d);
 
 	$effect(() => {
 		websocket = new WebSocket('ws' + PUBLIC_WORKER + '/' + 'tasks');
@@ -72,6 +74,7 @@ https://svelte.dev/e/js_parse_error -->
 	});
 
 	let tasks = $derived.by(() => {
+		i.tasks = [...i.tasks, ...i.offline_tasks];
 		return i.tasks.filter((t) => {
 			switch (i.mode) {
 				case 'x':
@@ -97,15 +100,30 @@ https://svelte.dev/e/js_parse_error -->
 				t: 0,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
-			// i.tasks = [task, ...i.tasks];
+			i.tasks = [...i.tasks, task];
 			name = '';
 			$taskInput?.focus();
 			scrollContent(osTaskList);
-			// $offlineTasks = [...$offlineTasks, task];
-			try {
-				task.i = (await axios.post('/', task)).data;
-				// $offlineTasks = $offlineTasks.filter((t) => t.id !== task.id);
-			} catch {}
+			
+			const maxRetries = 9; // Number of retries after the initial attempt
+			const initialDelayMs = 500; // Initial delay in milliseconds for retries
+			for (let attempt = 0; attempt <= maxRetries; attempt++) {
+				try {
+					await axios.post('/', task)
+					break;
+				} catch (error) {
+					console.error(`Attempt ${attempt + 1} of ${maxRetries + 1} to add task failed:`, error);
+					if (attempt < maxRetries) {
+						// Calculate exponential backoff delay
+						const delay = initialDelayMs * Math.pow(2, attempt);
+						await new Promise((resolve) => setTimeout(resolve, delay));
+					} else {
+						// All retries exhausted, log the final failure.
+						// Original code had an empty catch, so we won't rethrow.
+						console.error('All attempts to add task failed. Task may not be synchronized with the server.');
+					}
+				}
+			}
 		}
 	}
 
@@ -244,7 +262,7 @@ https://svelte.dev/e/js_parse_error -->
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
 		<ul class="task-list" bind:this={taskList}>
 			{#each tasks as task, i (task.i)}
-				<Task {task} {i} on:delete={() => del(task.i!)} on:click={toggleTaskProp} />
+				<Task {task} {i} ondelete={() => del(task.i!)} onclick={toggleTaskProp} />
 			{/each}
 		</ul>
 	</OverlayScrollbarsComponent>

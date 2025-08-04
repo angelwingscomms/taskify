@@ -7,19 +7,22 @@
 	import type { Task } from '$lib/types';
 	import MoreActions from './MoreActions.svelte';
 	import { SvelteDate } from 'svelte/reactivity';
+	import { date_format } from '$lib/util/date_format';
 	interface Props {
 		task: Task;
 		i: number;
+		onclick: (e: Event) => void,
+		ondelete: (id: string) => Promise<void>
 	}
 
-	let { task = $bindable(), i, onClick }: Props = $props();
+	let { task = $bindable(), i, onclick, ondelete }: Props = $props();
 	let hover = $state(false);
 	let show_ma = false;
-	function showMoreActions(e) {
-		e.stopPropagation();
-		show_ma = !show_ma;
-		$taskDropdownOverlay = show_ma;
-	}
+	// function showMoreActions(e) {
+	// 	e.stopPropagation();
+	// 	show_ma = !show_ma;
+	// 	$taskDropdownOverlay = show_ma;
+	// }
 
 	function mouseoverFunc() {
 		hover = true;
@@ -27,57 +30,7 @@
 	function mouseoutFunc() {
 		hover = false;
 	}
-
-	const format_date = (date: number) => {
-		const now = new Date(); // Current date for comparison
-		const inputDate = new Date(date); // The date to format
-
-		// Normalize to midnight for accurate day comparison for "Today" and "Yesterday"
-		const todayMidnight = new SvelteDate(now);
-		todayMidnight.setHours(0, 0, 0, 0);
-		const inputDateMidnight = new SvelteDate(inputDate);
-		inputDateMidnight.setHours(0, 0, 0, 0);
-
-		const diffTime = inputDateMidnight.getTime() - todayMidnight.getTime();
-		const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-		if (diffDays === 0) {
-			return 'Today';
-		} else if (diffDays === -1) {
-			return 'Yesterday';
-		} else {
-			const dateParts = [];
-
-			// Always include the weekday
-			dateParts.push(inputDate.toLocaleDateString(undefined, { weekday: 'long' }));
-
-			// Check if month and day need to be displayed (if month is different or year is different)
-			const isSameMonth = inputDate.getMonth() === now.getMonth();
-			const isSameYear = inputDate.getFullYear() === now.getFullYear();
-
-			if (!isSameMonth || !isSameYear) {
-				dateParts.push(inputDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }));
-			}
-
-			// Check if year needs to be displayed (if year is different)
-			if (!isSameYear) {
-				dateParts.push(inputDate.toLocaleDateString(undefined, { year: 'numeric' }));
-			}
-
-			// Combine the date parts
-			const formattedDate = dateParts.join(', ');
-
-			// Get the time in 24-hour format (HH:mm)
-			const formattedTime = inputDate.toLocaleTimeString(undefined, {
-				hour: '2-digit',
-				minute: '2-digit',
-				hourCycle: 'h23' // For 24-hour format
-			});
-
-			return `${formattedDate} ${formattedTime}`;
-		}
-	};
-
+	
 	let taskname: HTMLSpanElement | undefined = $state();
 
 	// Function to check for text wrapping and update styles
@@ -105,14 +58,13 @@
 		<button
 			class="complete"
 			onclick={(e) => {
-				toggleComplete();
 				e.stopPropagation();
 			}}
 			onmouseover={mouseover}
 			onmouseout={mouseout}
 		>
 			<i
-				class={task.completed
+				class={task.c
 					? 'fas fa-check-circle'
 					: hover
 						? 'far fa-circle-check'
@@ -121,9 +73,9 @@
 		</button>
 
 		<span
-			class:line-through={task.completed}
-			class:fade-text={task.completed}
-			onclick={(event) => {if (event.target === event.currentTarget) onClick()}}
+			class:line-through={task.c}
+			class:fade-text={task.c}
+			onclick={(event) => {if (event.target === event.currentTarget) onclick()}}
 			id="taskName"
 			bind:this={taskname}
 			class:mgTop0={wrapSwitch}
@@ -134,18 +86,17 @@
 		<div class="button-cont">
 			<button
 				onclick={(e) => {
-					toggleImportant();
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"
 				data-tooltip="Flag as important"
 			>
-				<i class:fas={task.important} class="far fa-flag"></i>
+				<i class:fas={task.x} class="far fa-flag"></i>
 			</button>
 			<button
 				onclick={(e) => {
 					task.t = +!task.t;
-					dispatch('delete');
+					ondelete(task.i as string);
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"
@@ -163,7 +114,7 @@
 		onclick={self(bubble('click'))}
 	>
 		<i class="far fa-calendar"></i>
-		{format_date(task.d)}
+		{date_format(task.d)}
 	</div>
 </li>
 

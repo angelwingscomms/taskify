@@ -4,9 +4,10 @@ export type Task = {
 	x?: number; // important
 	d: number; // date
 	n: string; // name
-  s?: string; //tenant-id
-  u?: string; //user
-  i?: string; //id
+	s?: string; //tenant-id
+	u?: string; //user
+	i?: string; //id
+	o?: string; //offline
 };
 
 export interface User {
@@ -14,4 +15,4 @@ export interface User {
 	p: string;
 }
 
-export type Mode = 't' | 'x' | 'c' | ''
+export type Mode = 't' | 'x' | 'c' | '';
