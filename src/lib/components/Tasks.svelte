@@ -7,7 +7,15 @@ https://svelte.dev/e/js_parse_error -->
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
-	import { searchInput, offlineTasks, breakpoint, sidebarOverlay, showPropSm, inputOverlay, taskInput, mode } from '$lib/stores';
+	import {
+		searchInput,
+		offlineTasks,
+		breakpoint,
+		sidebarOverlay,
+		showPropSm,
+		inputOverlay,
+		taskInput
+	} from '$lib/stores';
 	import type { Task as _Task } from '$lib/types';
 	import type { PageData } from './$types';
 	import { PUBLIC_WORKER } from '$env/static/public';
@@ -17,7 +25,7 @@ https://svelte.dev/e/js_parse_error -->
 	// let tasks: _Task[] = data.tasks;
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.date - a.date)
 	// // : $offlineTasks.sort((a, b) => b.date - a.date);
-	let name = '';
+	let name = $state('');
 	let taskList: HTMLUListElement;
 	let osTaskList: OverlayScrollbarsComponent;
 	let websocket: WebSocket | undefined = undefined;
@@ -33,13 +41,15 @@ https://svelte.dev/e/js_parse_error -->
 		websocket.onmessage = (event) => {
 			console.log('event', event);
 			let data = JSON.parse(event.data);
-			let existing_task_index = tasks.findIndex((t) => t.i === data.i);
-			console.log(existing_task_index)
-			if (existing_task_index) {
+			let existing_task_index = i.tasks.findIndex((t) => t.i === data.i);
+			console.log(existing_task_index);
+			if (existing_task_index > -1) {
 				i.tasks[existing_task_index] = data;
 			} else {
+				console.log('not exist');
 				i.tasks = [...i.tasks, data];
 			}
+			console.log('s', i.tasks, tasks);
 		};
 
 		// Connection closed
@@ -60,9 +70,9 @@ https://svelte.dev/e/js_parse_error -->
 		// };
 	});
 
-	$effect(() => {
-		tasks = tasks.filter((t) => {
-			switch ($mode) {
+	let tasks = $derived.by(() => {
+		return i.tasks.filter((t) => {
+			switch (i.mode) {
 				case 'important':
 					return t.important === 1 && t.trash !== 1;
 				case 'completed':
@@ -80,8 +90,14 @@ https://svelte.dev/e/js_parse_error -->
 		if (name === '') {
 			alert('Please enter a task');
 		} else {
-			const task: _Task = { name, completed: 0, important: 0, trash: 0, date: Date.now() /*, id: 'offline-' + $nextOfflineId++  */ };
-			tasks = [task, ...tasks];
+			const task: _Task = {
+				name,
+				completed: 0,
+				important: 0,
+				trash: 0,
+				date: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
+			};
+			// i.tasks = [task, ...i.tasks];
 			name = '';
 			$taskInput?.focus();
 			scrollContent(osTaskList);
@@ -112,14 +128,14 @@ https://svelte.dev/e/js_parse_error -->
 
 	// Delete a task
 	async function del(i: string) {
-		const taskToDelete = tasks.find((t) => t.i === i);
+		const taskToDelete = i.tasks.find((t) => t.i === i);
 		if (!taskToDelete) {
 			console.warn(`Attempted to delete non-existent task at index ${i}`);
 			return;
 		}
 
 		// Optimistically remove the task from the UI
-		tasks = tasks.filter((_, index) => index !== i);
+		tasks = i.tasks.filter((_, index) => index !== i);
 
 		if (taskToDelete.id) {
 			// If the task has an ID, it's a server-synced task. Attempt to delete from backend.
@@ -137,7 +153,9 @@ https://svelte.dev/e/js_parse_error -->
 			// It has already been removed from the `tasks` array.
 			// Now, remove it from the `$offlineTasks` store as well.
 			// This filters by object reference to ensure the exact pending task is removed.
-			$offlineTasks.update((currentOfflineTasks) => currentOfflineTasks.filter((offlineTask) => offlineTask !== taskToDelete));
+			$offlineTasks.update((currentOfflineTasks) =>
+				currentOfflineTasks.filter((offlineTask) => offlineTask !== taskToDelete)
+			);
 		}
 	}
 
@@ -198,7 +216,11 @@ https://svelte.dev/e/js_parse_error -->
 
 <svelte:window
 	on:keydown={(e) => {
-		if (e.key.match(/^[a-zA-Z0-9\/]$/) && document.activeElement !== $taskInput && document.activeElement !== $searchInput) {
+		if (
+			e.key.match(/^[a-zA-Z0-9\/]$/) &&
+			document.activeElement !== $taskInput &&
+			document.activeElement !== $searchInput
+		) {
 			$taskInput?.focus();
 			if (e.key === '/' && firstSlash) {
 				e.preventDefault();
@@ -225,7 +247,7 @@ https://svelte.dev/e/js_parse_error -->
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
 		<ul class="task-list" bind:this={taskList}>
-			{#each i.tasks as task, i (task.i)}
+			{#each tasks as task, i (task.i)}
 				<Task {task} {i} on:delete={() => del(i)} on:click={toggleTaskProp} />
 			{/each}
 		</ul>
@@ -263,7 +285,12 @@ https://svelte.dev/e/js_parse_error -->
 </div>
 
 <div class:showPropLg class:showPropSm={$showPropSm} class="task-properties" bind:this={taskProp}>
-	<div class="puller" on:touchstart={handleTouchStart} on:touchmove={handleTouchMove} on:touchend={handleTouchEnd}></div>
+	<div
+		class="puller"
+		on:touchstart={handleTouchStart}
+		on:touchmove={handleTouchMove}
+		on:touchend={handleTouchEnd}
+	></div>
 	<div>
 		<button class="tpClose" on:click={closeTaskPropLg}><i class="fas fa-xmark"></i></button>
 	</div>

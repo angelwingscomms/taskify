@@ -5,7 +5,14 @@
 	import wolf from '$lib/images/wolf(circle).png';
 	import homeIcon from '$lib/images/home-iconfont.svg';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
-	import { breakpoint, modalOpened, modalOverlay, mode, searchInput, showPD, sideBarOpen } from '$lib/stores';
+	import {
+		breakpoint,
+		modalOpened,
+		modalOverlay,
+		searchInput,
+		showPD,
+		sideBarOpen
+	} from '$lib/stores';
 	import { page } from '$app/state';
 	import { i } from '$lib/i.svelte';
 	let searchValue = $state('');
@@ -22,7 +29,7 @@
 			$modalOpened = !$modalOpened;
 		}
 	}
-	
+
 	run(() => {
 		if ($searchInput) {
 			if ($breakpoint?.matches) {
@@ -87,36 +94,63 @@
 		</div>
 		<div class="search-container" onclick={handlers(openModal, stopPropagation(bubble('click')))}>
 			<i class="fas fa-search search-icon"></i>
-			<input type="search" id="search-input" placeholder="Search" bind:value={searchValue} bind:this={$searchInput} />
+			<input
+				type="search"
+				id="search-input"
+				placeholder="Search"
+				bind:value={searchValue}
+				bind:this={$searchInput}
+			/>
 			{#if !searchValue}
 				<span aria-label="ctrlk">CTRL+K</span>
 			{/if}
 			{#if searchValue}
-				<button onclick={handlers(stopPropagation(bubble('click')), clearSearchInput)}><i id="clear-search" class="fas fa-xmark"></i></button>
+				<button onclick={handlers(stopPropagation(bubble('click')), clearSearchInput)}
+					><i id="clear-search" class="fas fa-xmark"></i></button
+				>
 			{/if}
 		</div>
 	</div>
-	<OverlayScrollbarsComponent style="flex: 1 0 0;" options={{ scrollbars: { autoHide: 'scroll' } }} defer>
+	<OverlayScrollbarsComponent
+		style="flex: 1 0 0;"
+		options={{ scrollbars: { autoHide: 'scroll' } }}
+		defer
+	>
 		<div class="aside-middle" bind:this={asideMid} onscroll={handleAsideScroll}>
-			<a onclick={() => i.mode = ''} href="#" class="menu-items" class:active={i.mode === ''}>
+			<a onclick={() => (i.mode = '')} href="#" class="menu-items" class:active={i.mode === ''}>
 				<i class="fas fa-list-check"></i>
 				<span class="menu-name">Tasks</span>
 				<span class="list-amount">{i.tasks.length}</span>
 			</a>
-			<a onclick={() => i.mode = 'important'} href="#" class="menu-items" class:active={i.mode === 'important'}>
+			<a
+				onclick={() => (i.mode = 'important')}
+				href="#"
+				class="menu-items"
+				class:active={i.mode === 'important'}
+			>
 				<i class="far fa-flag"></i>
 				<span class="menu-name">Important</span>
-				<span class="list-amount">{i.tasks.filter(t => t.important).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.important).length}</span>
 			</a>
-			<a onclick={() => i.mode = 'completed'} href="#" class="menu-items" class:active={i.mode === 'completed'}>
+			<a
+				onclick={() => (i.mode = 'completed')}
+				href="#"
+				class="menu-items"
+				class:active={i.mode === 'completed'}
+			>
 				<i class="far fa-circle-check"></i>
 				<span class="menu-name">Completed</span>
-				<span class="list-amount">{i.tasks.filter(t => t.completed).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.completed).length}</span>
 			</a>
-			<a onclick={() => i.mode = 'trash'} href="#" class="menu-items" class:active={i.mode === 'trash'}>
+			<a
+				onclick={() => (i.mode = 'trash')}
+				href="#"
+				class="menu-items"
+				class:active={i.mode === 'trash'}
+			>
 				<i class="far fa-trash-can"></i>
 				<span class="menu-name">Trash</span>
-				<span class="list-amount">{i.tasks.filter(t => t.deleted).length}</span>
+				<span class="list-amount">{i.tasks.filter((t) => t.deleted).length}</span>
 			</a>
 			<hr />
 			<a href="#" class="menu-items">
