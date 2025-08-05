@@ -8,7 +8,7 @@ https://svelte.dev/e/js_parse_error -->
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
-	import { createDraggable } from 'animejs';
+	import anime, { createDraggable } from 'animejs';
 	import {
 		searchInput,
 		breakpoint,
@@ -28,13 +28,17 @@ https://svelte.dev/e/js_parse_error -->
 	let websocket: WebSocket | undefined = undefined;
 
 	let { t }: { t: _Task[] } = $props();
-	
+	let task_height = $state(0);
+	let top_zIndex = $state(1);
 	// createDraggable('.')
 
 	// $offlineTasks = [];
 	i.tasks = t;
+	i.p = Math.max(...i.tasks.map((task) => task.p), 0) + 1;
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
 	// // : $offlineTasks.sort((a, b) => b.d - a.d);
+
+	$effect(() => console.log(task_height));
 
 	$effect(() => {
 		websocket = new WebSocket('ws' + PUBLIC_WORKER + '/' + 'tasks');
@@ -85,11 +89,12 @@ https://svelte.dev/e/js_parse_error -->
 				n: name,
 				i: v7(),
 				o: true,
+				p: i.p++,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
 			i.tasks = [...i.tasks, task];
 			name = '';
-			if (websocket) websocket.send(JSON.stringify(task))
+			if (websocket) websocket.send(JSON.stringify(task));
 			$taskInput?.focus();
 			scrollContent(osTaskList);
 
@@ -175,7 +180,7 @@ https://svelte.dev/e/js_parse_error -->
 			// Large screen
 			showPropLg = !showPropLg;
 		}
-		e.stopPropagation();
+		// e.stopPropagation();
 	}
 
 	/* MOBILE TASK PROP SWIPE FUNCTIONALITY */
@@ -184,6 +189,33 @@ https://svelte.dev/e/js_parse_error -->
 	function handleTouchStart(e) {
 		startY = e.touches[0].clientY;
 	}
+
+	let elements: HTMLLIElement[] = $state([]);
+	let drag_start_info: null | { i: string; p: number } = $state(null);
+
+	onMount(() => {
+		elements.forEach((el, index) => {
+			anime.set(el, {
+				top: index * task_height,
+				left: 0,
+				position: 'absolute'
+			});
+			createDraggable(el, {
+				container: '.task-list',
+				y: { snap: task_height },
+				// x: false,
+				onGrab: (draggable) => {
+					const item = i[i.mode][index];
+					drag_start_info = { i: item.i, p: item.p };
+					top_zIndex++;
+					draggable.$target.style.zIndex = String(top_zIndex);
+				},
+				onRelease: (draggable) => {
+					console.log('drop', draggable.destY, task_height);
+				}
+			});
+		});
+	});
 
 	function handleTouchMove(e) {
 		if (!startY) return;
@@ -252,7 +284,14 @@ https://svelte.dev/e/js_parse_error -->
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
 		<ul class="task-list" bind:this={taskList}>
 			{#each i[i.mode] as task, i (task.i)}
-				<Task {websocket} {task} {i} onclick={toggleTaskProp} />
+				<Task
+					bind:height={task_height}
+					bind:ref={elements[i]}
+					{websocket}
+					{task}
+					{i}
+					onclick={toggleTaskProp}
+				/>
 			{/each}
 		</ul>
 	</OverlayScrollbarsComponent>

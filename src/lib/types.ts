@@ -4,10 +4,11 @@ export type Task = {
 	x?: number; // important
 	d: number; // date
 	n: string; // name
-	s?: string; //tenant-id
-	u?: string; //user
-	i?: string; //id
-	o?: boolean; //offline
+	s?: string; // tenant-id
+	u?: string; // user
+	i: string; // id
+	o?: boolean; // offline,
+	p: number; // position
 };
 
 export interface User {

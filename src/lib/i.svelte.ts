@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type { Mode, Task } from './types';
 
 class App {
@@ -19,6 +20,7 @@ class App {
 	s: Task[] = $derived.by(async () => {
 		return await axios.get('/');
 	});
+	p = $state(0)
 }
 
 export const i = new App();

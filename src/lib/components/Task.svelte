@@ -7,23 +7,32 @@
 	import type { Mode, Task } from '$lib/types';
 	import MoreActions from './MoreActions.svelte';
 	import { date_format } from '$lib/util/date_format';
-	import { height_w_margin } from '$lib/util/height_w_margin';
 	interface Props {
 		task: Task;
 		i: number;
 		height?: number;
+		ref: HTMLLIElement;
 		websocket: WebSocket | undefined;
 		onclick: (e: Event) => void;
 	}
-	
-	let { task = $bindable(), websocket, height, i, onclick }: Props = $props();
+
+	let {
+		task = $bindable(),
+		websocket,
+		ref = $bindable(),
+		height = $bindable(),
+		i,
+		onclick
+	}: Props = $props();
 	let hover = $state(false);
-	let show_ma = false;
+	// let show_ma = false;
 	// function showMoreActions(e) {
 	// 	e.stopPropagation();
 	// 	show_ma = !show_ma;
 	// 	$taskDropdownOverlay = show_ma;
 	// }
+
+	let elements: HTMLElement[] = $state([]);
 
 	function mouseoverFunc() {
 		hover = true;
@@ -60,9 +69,36 @@
 			checkTextWrap();
 		}
 	});
+
+	const get_height = (node: HTMLElement) => {
+		const update = () => {
+			height = node.clientHeight + parseFloat(getComputedStyle(node).marginBottom);
+		};
+
+		update(); // Initial measure
+
+		// const resizeObserver = new ResizeObserver(update);
+		// resizeObserver.observe(node);
+
+		// const observer = new MutationObserver(update);
+		// observer.observe(node, { attributes: true, attributeFilter: ['style', 'class'] });
+
+		return {
+			destroy() {
+				// resizeObserver.disconnect();
+				// observer.disconnect();
+			}
+		};
+	};
 </script>
 
-<li use:height_w_margin={height} class:offline-task={task.o} onclick={self(bubble('click'))}>
+<li
+	bind:this={ref}
+	class="drag-task"
+	use:get_height
+	class:offline-task={task.o}
+	onclick={self(bubble('click'))}
+>
 	<div>
 		<button
 			class="complete"
