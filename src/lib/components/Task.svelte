@@ -32,8 +32,6 @@
 	// 	$taskDropdownOverlay = show_ma;
 	// }
 
-	let elements: HTMLElement[] = $state([]);
-
 	function mouseoverFunc() {
 		hover = true;
 	}

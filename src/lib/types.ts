@@ -12,8 +12,10 @@ export type Task = {
 };
 
 export interface User {
-	t: string;
-	p: string;
+	t?: string; // user tag/name
+	e: string; // email
+	ph: string; // password hash
+	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
 
 export type Mode = 't' | 'x' | 'c' | 'a' | 's';

@@ -6,6 +6,8 @@ import { v7 as uuidv7 } from 'uuid';
 import { collection } from '$lib/constants';
 import type { User } from '$lib/types';
 
+export interface PayloadFilter extends Record<string, unknown> {}
+
 // Qdrant client configuration
 export const qdrant = new QdrantClient({
 	url: QDRANT_URL || 'http://localhost:6333',
@@ -26,7 +28,7 @@ export const set = async (id: string, payload: Record<string, unknown>) => {
 };
 
 // Database operations wrapper
-export async function upsertPoint<T extends { i?: string; s: string }>(
+export async function edit_point<T extends { i?: string; s: string }>(
 	data: T
 ): Promise<T & { i: string }> {
 	const i = data.i || generateId();
@@ -74,10 +76,8 @@ export async function create<T extends { i?: string; id?: string; s: string }>(
 	return id;
 }
 
-export async function searchByPayload<T>(
-	filters: Record<string, unknown>,
-	limit: number = 144
-): Promise<T[]> {
+export async function search_by_payload<T>(filters: PayloadFilter, limit?: number): Promise<T[]> {
+	const actual_limit = limit || 144;
 	const mustFilters = Object.entries(filters)
 		.filter(([, value]) => value !== undefined && value !== null && value !== '')
 		.map(([key, value]) => ({
@@ -95,30 +95,30 @@ export async function searchByPayload<T>(
 			filter: {
 				must: mustFilters
 			},
-			limit,
+			limit: actual_limit,
 			with_payload: true,
 			with_vector: false
 		});
 
-		// console.debug('searchByPayload results', results);
+		// console.debug('search_by_payload results', results);
 
 		return results.points.map((point) => ({ ...(point.payload as T), i: point.id }));
 	} catch (error) {
-		console.error('Error in searchByPayload:', error);
+		console.error('Error in search_by_payload:', error);
 		console.error('Filters:', filters);
 		console.error('Must filters:', mustFilters);
 		throw error;
 	}
 }
 
-export async function searchByVector<T>({
+export async function search_by_vector<T>({
 	vector,
 	limit = 54,
 	with_payload,
 	filter
 }: {
 	vector: number[];
-	with_payload?: string[],
+	with_payload?: string[];
 	limit?: number;
 	filter?: Record<string, unknown>;
 }): Promise<T[]> {
@@ -136,9 +136,9 @@ export async function searchByVector<T>({
 
 		const results = await qdrant.search(collection, searchParams);
 
-		return results.map((point) => ({...point.payload as T, i: point.id}));
+		return results.map((point) => ({ ...(point.payload as T), i: point.id }));
 	} catch (error) {
-		console.error('Error in searchByVector:', error);
+		console.error('Error in search_by_vector:', error);
 		console.error('Vector length:', vector.length);
 		console.error('Filter:', filter);
 		throw error;
@@ -170,14 +170,14 @@ export async function get<T>(
 	}
 }
 
-export async function deleteById(id: string): Promise<void> {
+export async function delete_by_id(id: string): Promise<void> {
 	await qdrant.delete(collection, {
 		points: [id],
 		wait: true
 	});
 }
 
-export async function updatePoint<T extends { id: string; s: string }>(
+export async function update_point<T extends { id: string; s: string }>(
 	id: string,
 	data: Partial<T>
 ): Promise<void> {
@@ -186,11 +186,11 @@ export async function updatePoint<T extends { id: string; s: string }>(
 		throw new Error('Document not found');
 	}
 
-	await upsertPoint({ ...existing, ...data, id });
+	await edit_point({ ...existing, ...data, id });
 }
 
 // Get username from their ID
-export async function getUsernameFromId(userId: string): Promise<string> {
+export async function get_username_from_id(userId: string): Promise<string> {
 	const user = await get<{ u?: string }>(userId);
 
 	if (user && user.u) {
@@ -202,7 +202,7 @@ export async function getUsernameFromId(userId: string): Promise<string> {
 }
 
 export const find_user_by_tag = async (t: string) => {
-	return (await searchByPayload<User>({ s: 'u', t }))[0];
+	return (await search_by_payload<User>({ s: 'u', t }))[0];
 };
 
 export const delete_ = async (id: string): Promise<void> => {

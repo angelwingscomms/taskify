@@ -8,7 +8,7 @@ https://svelte.dev/e/js_parse_error -->
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
-	import anime, { createDraggable } from 'animejs';
+	import { animate, createDraggable, utils } from 'animejs';
 	import {
 		searchInput,
 		breakpoint,
@@ -195,76 +195,80 @@ https://svelte.dev/e/js_parse_error -->
 
 	onMount(() => {
 		elements.forEach((el, index) => {
-			anime.set(el, {
-				top: index * task_height,
-				left: 0,
-				position: 'absolute'
-			});
+			// utils.set(el, {
+			// 	top: index * task_height,
+			// 	left: 0,
+			// 	position: 'absolute'
+			// });
 			createDraggable(el, {
 				container: '.task-list',
 				y: { snap: task_height },
+				x: false,
 				onGrab: (draggable) => {
 					draggable.$target.classList.add('drag');
 					draggable.$target.style.zIndex = String(top_zIndex++);
 					const item = i[i.mode][index];
 					drag_start_info = { i: item.i, p: item.p };
 				},
-				onRelease: async (draggable) => {
-				if (!drag_start_info) return;
-				// Capture drag_start_info in a new const after the null check
-				const currentDragStartInfo = drag_start_info;
+				onSnap: async (draggable) => {
+				    console.log(draggable.snapX, draggable.snapY)
+					if (!drag_start_info) return;
+					// Capture drag_start_info in a new const after the null check
+					const currentDragStartInfo = drag_start_info;
 
-				console.log('drop', draggable.destY, task_height);
-				let new_p = Math.max(
-					0,
-					Math.min(currentDragStartInfo.p + Math.round(Math.abs(draggable.destY) / task_height))
-				);
-				let positions_to_update: { i: string; p: number }[] = [];
-				if (new_p === currentDragStartInfo.p) {
-					anime({
-						targets: draggable.$target,
-						top: currentDragStartInfo.p * task_height,
-						duration: 200,
-						easing: 'easeOutQuint'
-					});
-				} else {
-					i[i.mode].forEach((item) => {
-						if (item.i === currentDragStartInfo.i) {
-							item.p = new_p;
-							positions_to_update.push({ i: item.i, p: item.p });
-						} else {
-							if (currentDragStartInfo.p < new_p && item.p >= new_p && item.p < currentDragStartInfo.p) {
-								item.p--;
+					console.log('drop', draggable.destY, task_height);
+					let new_p = Math.max(
+						0,
+						Math.min(currentDragStartInfo.p + Math.round(Math.abs(draggable.destY) / task_height))
+					);
+					let positions_to_update: { i: string; p: number }[] = [];
+					if (new_p === currentDragStartInfo.p) {
+						animate(draggable.$target, {
+							top: currentDragStartInfo.p * task_height,
+							duration: 200,
+							easing: 'easeOutQuint'
+						});
+					} else {
+						i[i.mode].forEach((item) => {
+							if (item.i === currentDragStartInfo.i) {
+								item.p = new_p;
 								positions_to_update.push({ i: item.i, p: item.p });
-							} else if (
-								currentDragStartInfo.p > new_p &&
-								item.p >= new_p &&
-								item.p < currentDragStartInfo.p
-							) {
-								item.p++;
-								positions_to_update.push({ i: item.i, p: item.p });
+							} else {
+								if (
+									currentDragStartInfo.p < new_p &&
+									item.p >= new_p &&
+									item.p < currentDragStartInfo.p
+								) {
+									item.p--;
+									positions_to_update.push({ i: item.i, p: item.p });
+								} else if (
+									currentDragStartInfo.p > new_p &&
+									item.p >= new_p &&
+									item.p < currentDragStartInfo.p
+								) {
+									item.p++;
+									positions_to_update.push({ i: item.i, p: item.p });
+								}
 							}
-						}
-					});
+						});
 
 						for (let mode of ['a', 'x', 'c', 't'] as Mode[]) {
 							i[mode].sort((a, b) => a.p - b.p);
 						}
 
-						await tick();
+						// await tick();
 
-						anime({
-							targets: elements,
+						animate(elements, {
 							top: (el, i) => i * task_height,
 							duration: 270,
 							easing: 'easeOutQuint',
-							complete: () => {
-							if (!websocket) return;
-							const ws = websocket; // Assign to a new const to help TypeScript with narrowing
-							positions_to_update.forEach((p) => {
-								ws.send(JSON.stringify(p));
-								axios.put('/', p);
-							});
+							onComplete: () => {
+								if (!websocket) return;
+								const ws = websocket; // Assign to a new const to help TypeScript with narrowing
+								positions_to_update.forEach((p) => {
+									// ws.send(JSON.stringify(p));
+									// axios.put('/', p);
+								});
 							}
 						});
 						draggable.$target.classList.remove('drag');
