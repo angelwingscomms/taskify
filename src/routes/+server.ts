@@ -1,14 +1,15 @@
 import type { RequestHandler } from './$types';
 import { collection, task_tenant_id } from '$lib/constants';
-import { v7 } from 'uuid';
 import { client } from '$lib/utilities/qdrant';
 import { embed } from '$lib/util/embed';
-import { get, set } from '$lib/db';
+import { get, search_by_vector, set } from '$lib/db';
 import type { Task } from '$lib/types';
-import axios from 'axios';
-import { PUBLIC_WORKER } from '$env/static/public';
 import { error } from '@sveltejs/kit';
 import { internal_error } from '$lib/util/internal_error';
+
+export const GET: RequestHandler = async ({ url }) => {
+	return await search_by_vector({ vector: await embed(url.searchParams.get('q') || '') });
+};
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('data', data);
 		data.u = locals.user.i;
 		data.s = task_tenant_id;
-		if (!data.i) error(400, 'missing i')
+		if (!data.i) error(400, 'missing i');
 		const i = data.i;
 		delete data.i;
 		await client.upsert(collection, {
@@ -37,7 +38,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 };
 
-export const PUT: RequestHandler = async ({ locals, url, request }) => {
+export const PUT: RequestHandler = async ({ locals, request }) => {
 	try {
 		const data = await request.json(); // Expecting field like 'c' or 'x', and its new value
 		console.log(data);

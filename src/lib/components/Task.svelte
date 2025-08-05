@@ -11,7 +11,7 @@
 		task: Task;
 		i: number;
 		height?: number;
-		ref: HTMLLIElement;
+		ref?: HTMLLIElement;
 		websocket: WebSocket | undefined;
 		onclick: (e: Event) => void;
 	}

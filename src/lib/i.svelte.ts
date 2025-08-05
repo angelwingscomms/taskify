@@ -17,10 +17,12 @@ class App {
 	a: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && !t.c);
 	});
-	s: Task[] = $derived.by(async () => {
-		return await axios.get('/');
+	s: Promise<Task[]> = $derived.by(async () => {
+		await new Promise((r) => setTimeout(r, 2160));
+		const res = await axios.get('/?q=' + this.search)
+		if (res.statusText === 'OK') return res.data;
 	});
-	p = $state(0)
+	p = $state(0);
 }
 
 export const i = new App();

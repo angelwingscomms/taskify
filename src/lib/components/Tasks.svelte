@@ -189,7 +189,7 @@ https://svelte.dev/e/js_parse_error -->
 	function handleTouchStart(e) {
 		startY = e.touches[0].clientY;
 	}
-
+	/*
 	let elements: HTMLLIElement[] = $state([]);
 	let drag_start_info: null | { i: string; p: number } = $state(null);
 
@@ -278,7 +278,7 @@ https://svelte.dev/e/js_parse_error -->
 				}
 			});
 		});
-	});
+	});*/
 
 	function handleTouchMove(e) {
 		if (!startY) return;
@@ -345,18 +345,29 @@ https://svelte.dev/e/js_parse_error -->
 	</div>
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
-		<ul class="task-list" bind:this={taskList}>
-			{#each i[i.mode] as task, i (task.i)}
+	{#await i[i.mode]}
+	<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+		<i class="fas fa-spinner fa-spin fa-4x"></i>
+	</div>
+{:then tasks}
+<ul class="task-list" bind:this={taskList}>
+			{#each tasks as task, i (task.i)}
 				<Task
 					bind:height={task_height}
-					bind:ref={elements[i]}
 					{websocket}
 					{task}
 					{i}
 					onclick={toggleTaskProp}
 				/>
 			{/each}
-		</ul>
+		</ul>{:catch}
+		<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; color: var(--error-color, #dc3545);">
+			<i class="fas fa-exclamation-triangle fa-4x" style="margin-bottom: 20px;"></i>
+			<p style="font-size: 1.2em; font-weight: bold;">Task Search Failed</p>
+			<p>There was an error on our side.</p>
+		</div>
+{/await}
+		
 	</OverlayScrollbarsComponent>
 
 	{#if i.tasks.length === 0}
