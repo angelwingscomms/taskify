@@ -1,82 +1,63 @@
+import { hash, verify } from 'argon2';
 import { fail, redirect } from '@sveltejs/kit';
-import { hash_password, verify_password } from '$lib/server/auth';
-import { edit_point, search_by_payload, PayloadFilter } from '$lib/db';
+import * as auth from '$lib/server/auth';
+import type { Actions, PageServerLoad } from './$types';
+import { find_user_by_tag, getfirst } from '$lib/db';
+import { create_user } from '$lib/auth';
 import type { User } from '$lib/types';
 
-// Helper function to get user by email directly within this file
-async function get_user_by_email(email: string): Promise<User | null> {
-	const search_results = await search_by_payload<User>({ s: 'u', e: email } as PayloadFilter, 1);
-
-	if (search_results.length > 0) {
-		return { id: search_results[0].id, ...search_results[0].payload } as User;
+export const load: PageServerLoad = async ({ locals }) => {
+	if (locals.user) {
+		return redirect(302, '/');
 	}
-	return null;
-}
+	return {};
+};
 
-export const actions = {
-	authenticate: async ({ request, cookies }) => {
-		const data = await request.formData();
-		const email = data.get('email')?.toString();
-		const password = data.get('password')?.toString();
-		const confirm_password = data.get('confirm_password')?.toString(); // Only present for new accounts
+export const actions: Actions = {
+	default: async (event) => {
+		const formData = await event.request.formData();
+		const email = formData.get('e') as string;
+		const password = formData.get('p') as string;
+		const isNewUser = formData.get('n');
+		console.log(isNewUser)
 
-		if (!email || !password) {
-			return fail(400, { message: 'Email and password are required.' });
-		}
-
-		let is_new_account = data.get('is_new_account') === 'true'; // Hidden field to indicate mode
-
-		if (is_new_account) {
-			if (password !== confirm_password) {
-				return fail(400, { message: 'Passwords do not match.' });
+		// Conditional logic based on is_new_user
+		if (isNewUser === 'true') {
+			// Register path
+			const existingUser = await getfirst({ e: email });
+			if (existingUser) {
+				return fail(400, { message: 'user with that email already exists' });
 			}
 
-			const existing_user = await get_user_by_email(email);
-			if (existing_user) {
-				return fail(409, { message: 'Account with this email already exists.' });
+			const passwordHash = await hash(password);
+
+			try {
+				const user_id = await create_user(email, { ph: passwordHash, e: email });
+				const session = await auth.createSession(user_id as string);
+				auth.setSessionTokenCookie(event, session);
+			} catch (e) {
+				console.error('register error: ', e);
+				return fail(500, { message: 'there was an error on our side' });
 			}
-
-			const password_hash = await hash_password(password);
-			const user_id = crypto.randomUUID(); // Generate a unique user ID
-
-			await edit_point({
-				id: user_id,
-				payload: {
-					s: 'u', // user data type
-					e: email,
-					ph: password_hash
-				},
-				wait: true
-			});
-
-			cookies.set('sessionid', user_id, {
-				path: '/',
-				httpOnly: true,
-				secure: true,
-				maxAge: 60 * 60 * 24 * 7
-			}); // 1 week
-			throw redirect(303, '/');
 		} else {
-			// Login mode
-			const user = await get_user_by_email(email);
-
-			if (!user || !user.ph) {
-				return fail(400, { message: 'Invalid email or password.' });
+			// Login path
+			const existingUser = await getfirst<User>({ e: email });
+			if (!existingUser) {
+				return fail(400, { message: 'user does not exist' });
+			}
+			if (!existingUser.ph) {
+				return fail(500);
 			}
 
-			const password_matches = await verify_password(password, user.ph);
-
-			if (!password_matches) {
-				return fail(400, { message: 'Invalid email or password.' });
+			const validPassword = await verify(existingUser.ph, password);
+			if (!validPassword) {
+				return fail(400, { message: 'Incorrect password' });
 			}
 
-			cookies.set('sessionid', user.id, {
-				path: '/',
-				httpOnly: true,
-				secure: true,
-				maxAge: 60 * 60 * 24 * 7
-			}); // 1 week
-			throw redirect(303, '/');
+			const session = await auth.createSession(existingUser.i as string);
+			auth.setSessionTokenCookie(event, session);
 		}
+
+		return redirect(302, '/');
 	}
 };

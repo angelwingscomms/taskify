@@ -1,6 +1,6 @@
 import { Google } from 'arctic';
 import { GOOGLE_ID, GOOGLE_SECRET, GOOGLE_REDIRECT_URL } from '$env/static/private';
-import { get, search_by_payload, edit_point } from '$lib/db';
+import { get, search_by_payload, edit_point, delete_ } from '$lib/db';
 import type { User } from '$lib/types';
 import { v7 } from 'uuid';
 import type { RequestEvent } from '@sveltejs/kit';

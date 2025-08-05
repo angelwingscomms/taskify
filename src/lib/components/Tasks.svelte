@@ -316,6 +316,7 @@ https://svelte.dev/e/js_parse_error -->
 <svelte:window
 	on:keydown={(e) => {
 		if (
+		    !i.editing_username &&
 			e.key.match(/^[a-zA-Z0-9/]$/) &&
 			document.activeElement !== $taskInput &&
 			document.activeElement !== $searchInput

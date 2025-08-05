@@ -5,6 +5,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { v7 as uuidv7 } from 'uuid';
 import { collection } from '$lib/constants';
 import type { User } from '$lib/types';
+import { embed } from '$lib/util/embed';
 
 export interface PayloadFilter extends Record<string, unknown> {}
 
@@ -13,6 +14,14 @@ export const qdrant = new QdrantClient({
 	url: QDRANT_URL || 'http://localhost:6333',
 	apiKey: QDRANT_KEY
 });
+
+export async function getfirst<T>(filters: PayloadFilter): Promise<T | null> {
+	const results = await search_by_payload<T>(filters, 1);
+	if (results.length > 0) {
+		return results[0];
+	}
+	return null;
+}
 
 // Utility functions
 export function generateId(): string {
@@ -55,11 +64,12 @@ export async function create<T extends { i?: string; id?: string; s: string }>(
 ): Promise<string> {
 	const id = generateId();
 
-	let vector: number[] = new Array(768).fill(0);
+	let vector: number[] = [];
 
 	if (string_to_embed) {
-		// TODO: Implement proper embedding generation
-		vector = new Array(768).fill(0);
+		vector = await embed(string_to_embed);
+	} else {
+		vector = new Array(3072).fill(0);
 	}
 
 	await qdrant.upsert(collection, {
@@ -76,25 +86,22 @@ export async function create<T extends { i?: string; id?: string; s: string }>(
 	return id;
 }
 
+export const format_filters = (filters: PayloadFilter) => {
+	return {
+		must: Object.entries(filters)
+			.filter(([, value]) => value !== undefined && value !== null && value !== '')
+			.map(([key, value]) => ({
+				key,
+				match: { value }
+			}))
+	};
+};
+
 export async function search_by_payload<T>(filters: PayloadFilter, limit?: number): Promise<T[]> {
 	const actual_limit = limit || 144;
-	const mustFilters = Object.entries(filters)
-		.filter(([, value]) => value !== undefined && value !== null && value !== '')
-		.map(([key, value]) => ({
-			key,
-			match: { value }
-		}));
-
-	// If no valid filters, return empty array
-	if (mustFilters.length === 0) {
-		return [];
-	}
-
 	try {
 		const results = await qdrant.scroll(collection, {
-			filter: {
-				must: mustFilters
-			},
+			filter: format_filters(filters),
 			limit: actual_limit,
 			with_payload: true,
 			with_vector: false
@@ -106,7 +113,6 @@ export async function search_by_payload<T>(filters: PayloadFilter, limit?: numbe
 	} catch (error) {
 		console.error('Error in search_by_payload:', error);
 		console.error('Filters:', filters);
-		console.error('Must filters:', mustFilters);
 		throw error;
 	}
 }
@@ -131,7 +137,7 @@ export async function search_by_vector<T>({
 		};
 
 		if (filter) {
-			searchParams.filter = filter;
+			searchParams.filter = format_filters(filter);
 		}
 
 		const results = await qdrant.search(collection, searchParams);

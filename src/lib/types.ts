@@ -14,7 +14,9 @@ export type Task = {
 export interface User {
 	t?: string; // user tag/name
 	e: string; // email
+	s?: string // tenant-id
 	ph: string; // password hash
+  i: string; // id
 	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
 

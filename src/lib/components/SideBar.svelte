@@ -14,9 +14,48 @@
 	import { page } from '$app/state';
 	import { modes } from '$lib/constants';
 	import { i } from '$lib/i.svelte';
-	
+
 	function showProfileDB() {
 		$showPD = !$showPD;
+	}
+
+	let username_val = $state(page.data.user?.t || '');
+
+	function enable_username_edit(e) {
+		i.editing_username = true;
+		username_val = page.data.user?.t;
+	}
+
+	async function submit_username() {
+		try {
+			const res = await fetch('/', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ t: username_val })
+			});
+			if (res.ok) {
+				page.data.user.t = username_val;
+				i.editing_username = false;
+			} else {
+				alert('an error occured on our side');
+			}
+		} catch (err) {
+			alert('an error occured on our side');
+		}
+	}
+
+	function cancel_username() {
+		i.editing_username = false;
+	}
+
+	function handle_username_keydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			submit_username();
+		} else if (e.key === 'Escape') {
+			cancel_username();
+		}
 	}
 	function clearSearchInput() {
 		i.search = '';
@@ -60,12 +99,30 @@
 	<div class="aside-top" class:asideScrolled={scrolled}>
 		<div class="profile-overall">
 			<button class="dropdown-activator" class:showPD={$showPD} onclick={showProfileDB}>
-				<img class="avatar" src={page.data.user?.p} alt="user profile picture" />
-				<span class="username">{page.data.user?.t}</span>
+				{#if page.data.user?.p}
+					<img class="avatar" src={page.data.user?.p} alt="user profile picture" />
+				{/if}
+				{#if i.editing_username}
+					<input
+						class="username-edit"
+						bind:value={username_val}
+						onkeydown={handle_username_keydown}
+					/>
+					<button onclick={submit_username}><i class="fas fa-check"></i></button>
+					<button onclick={cancel_username}><i class="fas fa-times"></i></button>
+				{:else}
+					<span class="username">{page.data.user?.t}</span>
+				{/if}
 			</button>
 			<ul class="profile-dropdown-body" class:showPD={$showPD}>
 				<li>
-					<a href="#">
+					<a
+						href="#"
+						onclick={(e) => {
+							e.preventDefault();
+							enable_username_edit();
+						}}
+					>
 						<i class="far fa-user"></i>
 						Edit username
 					</a>
@@ -96,7 +153,7 @@
 			<input
 				type="search"
 				id="search-input"
-				oninput={() => i.mode = 's'}
+				oninput={() => (i.mode = 's')}
 				placeholder="Search"
 				bind:value={i.search}
 				bind:this={$searchInput}
@@ -118,7 +175,12 @@
 	>
 		<div class="aside-middle" bind:this={asideMid} onscroll={handleAsideScroll}>
 			{#each Object.entries(modes) as [mode, v] (mode)}
-				<a onclick={() => (i.mode = mode)} href="#" class="menu-items" class:active={i.mode === mode}>
+				<a
+					onclick={() => (i.mode = mode)}
+					href="#"
+					class="menu-items"
+					class:active={i.mode === mode}
+				>
 					<i class={v.icon_classes}></i>
 					<span class="menu-name">{v.text}</span>
 					<span class="list-amount">{i[mode].length}</span>

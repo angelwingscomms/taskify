@@ -1,8 +1,8 @@
-import { upsertPoint } from "$lib/db";
+import { create } from "$lib/db";
 import type { User } from "$lib/types";
 
-export const create_user = async (tag: string, other: {p?: string, gid?: string}) => {
-  return await upsertPoint<User>({
+export const create_user = async (tag: string, other: Partial<User>) => {
+  return await create<User>({
     s: 'u',
     t: tag,
     d: '', // empty description initially
@@ -12,5 +12,5 @@ export const create_user = async (tag: string, other: {p?: string, gid?: string}
 		n: 0, // default longitude
 		w: '', // empty whatsapp link initially
     ...other
-  })
+  }, JSON.stringify({user_tag: tag}))
 }
