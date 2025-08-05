@@ -34,7 +34,7 @@ https://svelte.dev/e/js_parse_error -->
 
 	// $offlineTasks = [];
 	i.tasks = t;
-	i.p = Math.max(...i.tasks.map((task) => task.p), 0) + 1;
+	i.p = Math.max(...i.tasks.map((task) => task.p), 0);
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
 	// // : $offlineTasks.sort((a, b) => b.d - a.d);
 
@@ -203,15 +203,35 @@ https://svelte.dev/e/js_parse_error -->
 			createDraggable(el, {
 				container: '.task-list',
 				y: { snap: task_height },
-				// x: false,
 				onGrab: (draggable) => {
+					draggable.$target.classList.add('drag');
+					draggable.$target.style.zIndex = String(top_zIndex++);
 					const item = i[i.mode][index];
 					drag_start_info = { i: item.i, p: item.p };
-					top_zIndex++;
-					draggable.$target.style.zIndex = String(top_zIndex);
 				},
 				onRelease: (draggable) => {
+					if (!drag_start_info) return;
 					console.log('drop', draggable.destY, task_height);
+					let new_p = Math.max(
+						0,
+						Math.min(drag_start_info.p + Math.round(Math.abs(draggable.destY) / task_height))
+					);
+					if (new_p === drag_start_info.p) {
+						anime({
+							targets: draggable.$target,
+							top: drag_start_info.p * task_height,
+							duration: 200,
+							easing: 'easeOutQuint'
+						});
+					} else {
+						i[i.mode].forEach((item) => {
+							if (item.i === drag_start_info.i) {
+								item.p = new_p;
+							} else {
+							if (drag_start_info.p <)
+							}
+						});
+					}
 				}
 			});
 		});
