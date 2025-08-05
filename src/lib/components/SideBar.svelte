@@ -21,23 +21,29 @@
 	}
 
 	let username_val = $state(page.data.user?.t || '');
+	let username_edit_loading = $state(false);
 
 	function enable_username_edit(e) {
+		$showPD = false;
 		i.editing_username = true;
 		username_val = page.data.user?.t;
 	}
 
 	async function submit_username() {
+		username_edit_loading = true;
 		try {
-			const res = await axios.put('/',{ t: username_val })
+			const res = await axios.put('/edit_user', { t: username_val });
 			if (res.ok) {
 				page.data.user.t = username_val;
-				i.editing_username = false;
+				let username_val = page.data.user?.t || '';
 			} else {
 				alert('an error occured on our side');
 			}
 		} catch (err) {
 			alert('an error occured on our side');
+		} finally {
+			editing_username = false;
+			username_edit_loading = false;
 		}
 	}
 
@@ -103,7 +109,13 @@
 						bind:value={username_val}
 						onkeydown={handle_username_keydown}
 					/>
-					<button onclick={submit_username}><i class="fas fa-check"></i></button>
+					<button onclick={submit_username} class="submit-username">
+						{#if username_edit_loading}
+							<i class="fas fa-spinner fa-spin"></i>
+						{:else}
+							<i class="fas fa-check"></i>
+						{/if}
+					</button>
 					<button onclick={cancel_username}><i class="fas fa-times"></i></button>
 				{:else}
 					<span class="username">{page.data.user?.t}</span>

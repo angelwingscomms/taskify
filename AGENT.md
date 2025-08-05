@@ -9,11 +9,9 @@ start every task by creating a telegraphic speech list that details the task int
 - define all types in `src/lib/types`.
 - always get all data for a page in load function in page.server.ts
 
-- for db stuff, always use the db helper functions in src/lib/db/index.ts, always use edit_point to edit exisiting points
+- always use in src/lib/db/index.ts for db ops
 - always use api routes to get data from client to server, e.g routes/search/+server.ts
-- always use wait: true for qdrant write ops
-- always use svelte fade transition in UI when you want
-- to make toast notifications, always read src/lib/toast.ts to see how to use toast notifications from there
+- always use src/lib/toast.ts for toast notifs
 
 - in server files(e.g endpoint or page load), use error from '@sveltejs/kit': throw error(404, 'Resource not found')
 - get logged in user on server from locals.user
@@ -24,4 +22,5 @@ start every task by creating a telegraphic speech list that details the task int
 - always validate input client-side and server-side
 - always provide user-friendly errors
 - always use Typescript
+- always use Svelte5 syntax - runes, onclick instead of on:click, and all such things
 - always use embed src/lib/embed.ts for embedding text
