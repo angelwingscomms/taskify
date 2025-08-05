@@ -4,11 +4,11 @@ import { client } from '$lib/utilities/qdrant';
 import { embed } from '$lib/util/embed';
 import { get, search_by_vector, set } from '$lib/db';
 import type { Task } from '$lib/types';
-import { error } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { internal_error } from '$lib/util/internal_error';
 
 export const GET: RequestHandler = async ({ url }) => {
-	return await search_by_vector({ vector: await embed(url.searchParams.get('q') || '') });
+	return json(await search_by_vector({ vector: await embed(url.searchParams.get('q') || '') }));
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
