@@ -216,7 +216,7 @@ https://svelte.dev/e/js_parse_error -->
 						0,
 						Math.min(drag_start_info.p + Math.round(Math.abs(draggable.destY) / task_height))
 					);
-					let positions_to_update
+					let positions_to_update: { i: string; p: number }[] = [];
 					if (new_p === drag_start_info.p) {
 						anime({
 							targets: draggable.$target,
@@ -228,15 +228,18 @@ https://svelte.dev/e/js_parse_error -->
 						i[i.mode].forEach((item) => {
 							if (item.i === drag_start_info.i) {
 								item.p = new_p;
+								positions_to_update.push({ i: item.i, p: item.p });
 							} else {
 								if (drag_start_info.p < new_p && item.p >= new_p && item.p < drag_start_info.p) {
 									item.p--;
+									positions_to_update.push({ i: item.i, p: item.p });
 								} else if (
 									drag_start_info.p > new_p &&
 									item.p >= new_p &&
 									item.p < drag_start_info.p
 								) {
 									item.p++;
+									positions_to_update.push({ i: item.i, p: item.p });
 								}
 							}
 						});
@@ -253,12 +256,16 @@ https://svelte.dev/e/js_parse_error -->
 							duration: 270,
 							easing: 'easeOutQuint',
 							complete: () => {
-							
+								if (!websocket) return;
+								positions_to_update.forEach((p) => {
+									websocket.send(JSON.stringify(p));
+									axios.put('/', p);
+								});
 							}
 						});
-						draggable.$target.classList.remove('drag')
-						draggable.$target.style.zIndex = "1";
-						drag_start_info = null
+						draggable.$target.classList.remove('drag');
+						draggable.$target.style.zIndex = '1';
+						drag_start_info = null;
 					}
 				}
 			});
