@@ -2,7 +2,7 @@
 https://svelte.dev/e/js_parse_error -->
 <script lang="ts">
 	import blankstate from '$lib/images/tasks-blankstate.png';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import axios from 'axios';
 	import { v7 } from 'uuid';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
@@ -17,7 +17,7 @@ https://svelte.dev/e/js_parse_error -->
 		inputOverlay,
 		taskInput
 	} from '$lib/stores';
-	import type { Task as _Task } from '$lib/types';
+	import type { Task as _Task, Mode } from '$lib/types';
 	import { PUBLIC_WORKER } from '$env/static/public';
 	import { i } from '$lib/i.svelte';
 	import { modes } from '$lib/constants';
@@ -209,13 +209,14 @@ https://svelte.dev/e/js_parse_error -->
 					const item = i[i.mode][index];
 					drag_start_info = { i: item.i, p: item.p };
 				},
-				onRelease: (draggable) => {
+				onRelease: async (draggable) => {
 					if (!drag_start_info) return;
 					console.log('drop', draggable.destY, task_height);
 					let new_p = Math.max(
 						0,
 						Math.min(drag_start_info.p + Math.round(Math.abs(draggable.destY) / task_height))
 					);
+					let positions_to_update
 					if (new_p === drag_start_info.p) {
 						anime({
 							targets: draggable.$target,
@@ -228,9 +229,36 @@ https://svelte.dev/e/js_parse_error -->
 							if (item.i === drag_start_info.i) {
 								item.p = new_p;
 							} else {
-							if (drag_start_info.p <)
+								if (drag_start_info.p < new_p && item.p >= new_p && item.p < drag_start_info.p) {
+									item.p--;
+								} else if (
+									drag_start_info.p > new_p &&
+									item.p >= new_p &&
+									item.p < drag_start_info.p
+								) {
+									item.p++;
+								}
 							}
 						});
+
+						for (let mode of ['a', 'x', 'c', 't'] as Mode[]) {
+							i[mode].sort((a, b) => a.p - b.p);
+						}
+
+						await tick();
+
+						anime({
+							targets: elements,
+							top: (el, i) => i * task_height,
+							duration: 270,
+							easing: 'easeOutQuint',
+							complete: () => {
+							
+							}
+						});
+						draggable.$target.classList.remove('drag')
+						draggable.$target.style.zIndex = "1";
+						drag_start_info = null
 					}
 				}
 			});
