@@ -8,7 +8,7 @@ import { error, json } from '@sveltejs/kit';
 import { internal_error } from '$lib/util/internal_error';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-	return json(await search_by_vector({ filter: {u: locals.user.i}, vector: await embed(url.searchParams.get('q') || '') }));
+	return json(await search_by_vector({ limit: 4, filter: {u: locals.user.i}, vector: await embed(url.searchParams.get('q') || '') }));
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {

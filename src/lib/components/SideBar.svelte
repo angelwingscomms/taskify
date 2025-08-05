@@ -29,20 +29,20 @@
 		username_val = page.data.user?.t;
 	}
 
-	  const submit_username = async () => {
+	const submit_username = async () => {
 		username_edit_loading = true;
 		try {
 			const res = await axios.put('/edit_user', { t: username_val });
-			console.log(res)
+			console.log(res);
 			page.data.user.t = username_val;
 		} catch (err) {
-		console.log(err)
+			console.log(err);
 			alert('an error occured on our side');
 		} finally {
 			i.editing_username = false;
 			username_edit_loading = false;
 		}
-	}
+	};
 
 	function cancel_username() {
 		i.editing_username = false;
@@ -131,7 +131,7 @@
 						Edit username
 					</a>
 				</li>
-				<!-- <li>
+				<li>
 					<a href="#">
 						<i class="fas fa-lock"></i>
 						Change password
@@ -142,7 +142,7 @@
 						<i class="far fa-image"></i>
 						Change image
 					</a>
-				</li> -->
+				</li>
 				<hr />
 				<li>
 					<a href="/logout">
@@ -179,16 +179,18 @@
 	>
 		<div class="aside-middle" bind:this={asideMid} onscroll={handleAsideScroll}>
 			{#each Object.entries(modes) as [mode, v] (mode)}
-				<a
-					onclick={() => (i.mode = mode)}
-					href="#"
-					class="menu-items"
-					class:active={i.mode === mode}
-				>
-					<i class={v.icon_classes}></i>
-					<span class="menu-name">{v.text}</span>
-					<span class="list-amount">{i[mode].length}</span>
-				</a>
+				{#if !(mode === 's' && !i.search)}
+					<a
+						onclick={() => (i.mode = mode)}
+						href="#"
+						class="menu-items"
+						class:active={i.mode === mode}
+					>
+						<i class={v.icon_classes}></i>
+						<span class="menu-name">{v.text}</span>
+						<span class="list-amount">{i[mode].length}</span>
+					</a>
+				{/if}
 			{/each}
 			<hr />
 			<a href="#" class="menu-items">

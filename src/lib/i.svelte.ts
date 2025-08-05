@@ -20,7 +20,7 @@ class App {
 	});
 	s: Promise<Task[]> = $derived.by(async () => {
 		if (!this.search) return;
-		await new Promise((r) => setTimeout(r, 2160));
+		// await new Promise((r) => setTimeout(r, 2160));
 		const res = await axios.get('/?q=' + this.search);
 		if (res.statusText === 'OK') return res.data;
 	});
