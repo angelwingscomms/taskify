@@ -6,6 +6,7 @@ class App {
 	mode: Mode = $state('a');
 	search: string = $state('');
 	editing_username = $state(false);
+	change_password_open = $state(false);
 	x: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && !t.c && t.x);
 	});

@@ -15,6 +15,7 @@
 	import { modes } from '$lib/constants';
 	import { i } from '$lib/i.svelte';
 	import axios from 'axios';
+	import ChangePasswordModal from './change_password_modal.svelte';
 
 	function showProfileDB() {
 		$showPD = !$showPD;
@@ -93,6 +94,7 @@
 		}
 	}}
 />
+<ChangePasswordModal />
 <aside class:showAside={$sideBarOpen}>
 	<div class="aside-top" class:asideScrolled={scrolled}>
 		<div class="profile-overall">
@@ -124,7 +126,7 @@
 						href="#"
 						onclick={(e) => {
 							e.preventDefault();
-							enable_username_edit();
+							enable_username_edit(e);
 						}}
 					>
 						<i class="far fa-user"></i>
@@ -132,7 +134,7 @@
 					</a>
 				</li>
 				<li>
-					<a href="#">
+					<a onclick={() => (i.change_password_open = true)} href="#">
 						<i class="fas fa-lock"></i>
 						Change password
 					</a>

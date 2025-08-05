@@ -37,7 +37,7 @@ export const set = async (id: string, payload: Record<string, unknown>) => {
 };
 
 // Database operations wrapper
-export async function edit_point<T extends { i?: string; s: string }>(
+export async function edit_point<T>(
 	data: T
 ): Promise<T & { i: string }> {
 	const i = data.i || generateId();
@@ -183,7 +183,7 @@ export async function delete_by_id(id: string): Promise<void> {
 	});
 }
 
-export async function update_point<T extends { id: string; s: string }>(
+export async function update_point<T>(
 	id: string,
 	data: Partial<T>
 ): Promise<void> {
@@ -192,7 +192,7 @@ export async function update_point<T extends { id: string; s: string }>(
 		throw new Error('Document not found');
 	}
 
-	await edit_point({ ...existing, ...data, id });
+	await edit_point({ ...existing, ...data, i: id });
 }
 
 // Get username from their ID
