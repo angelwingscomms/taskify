@@ -210,39 +210,42 @@ https://svelte.dev/e/js_parse_error -->
 					drag_start_info = { i: item.i, p: item.p };
 				},
 				onRelease: async (draggable) => {
-					if (!drag_start_info) return;
-					console.log('drop', draggable.destY, task_height);
-					let new_p = Math.max(
-						0,
-						Math.min(drag_start_info.p + Math.round(Math.abs(draggable.destY) / task_height))
-					);
-					let positions_to_update: { i: string; p: number }[] = [];
-					if (new_p === drag_start_info.p) {
-						anime({
-							targets: draggable.$target,
-							top: drag_start_info.p * task_height,
-							duration: 200,
-							easing: 'easeOutQuint'
-						});
-					} else {
-						i[i.mode].forEach((item) => {
-							if (item.i === drag_start_info.i) {
-								item.p = new_p;
+				if (!drag_start_info) return;
+				// Capture drag_start_info in a new const after the null check
+				const currentDragStartInfo = drag_start_info;
+
+				console.log('drop', draggable.destY, task_height);
+				let new_p = Math.max(
+					0,
+					Math.min(currentDragStartInfo.p + Math.round(Math.abs(draggable.destY) / task_height))
+				);
+				let positions_to_update: { i: string; p: number }[] = [];
+				if (new_p === currentDragStartInfo.p) {
+					anime({
+						targets: draggable.$target,
+						top: currentDragStartInfo.p * task_height,
+						duration: 200,
+						easing: 'easeOutQuint'
+					});
+				} else {
+					i[i.mode].forEach((item) => {
+						if (item.i === currentDragStartInfo.i) {
+							item.p = new_p;
+							positions_to_update.push({ i: item.i, p: item.p });
+						} else {
+							if (currentDragStartInfo.p < new_p && item.p >= new_p && item.p < currentDragStartInfo.p) {
+								item.p--;
 								positions_to_update.push({ i: item.i, p: item.p });
-							} else {
-								if (drag_start_info.p < new_p && item.p >= new_p && item.p < drag_start_info.p) {
-									item.p--;
-									positions_to_update.push({ i: item.i, p: item.p });
-								} else if (
-									drag_start_info.p > new_p &&
-									item.p >= new_p &&
-									item.p < drag_start_info.p
-								) {
-									item.p++;
-									positions_to_update.push({ i: item.i, p: item.p });
-								}
+							} else if (
+								currentDragStartInfo.p > new_p &&
+								item.p >= new_p &&
+								item.p < currentDragStartInfo.p
+							) {
+								item.p++;
+								positions_to_update.push({ i: item.i, p: item.p });
 							}
-						});
+						}
+					});
 
 						for (let mode of ['a', 'x', 'c', 't'] as Mode[]) {
 							i[mode].sort((a, b) => a.p - b.p);
@@ -256,11 +259,12 @@ https://svelte.dev/e/js_parse_error -->
 							duration: 270,
 							easing: 'easeOutQuint',
 							complete: () => {
-								if (!websocket) return;
-								positions_to_update.forEach((p) => {
-									websocket.send(JSON.stringify(p));
-									axios.put('/', p);
-								});
+							if (!websocket) return;
+							const ws = websocket; // Assign to a new const to help TypeScript with narrowing
+							positions_to_update.forEach((p) => {
+								ws.send(JSON.stringify(p));
+								axios.put('/', p);
+							});
 							}
 						});
 						draggable.$target.classList.remove('drag');
