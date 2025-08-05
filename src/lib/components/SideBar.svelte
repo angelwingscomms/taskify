@@ -14,6 +14,7 @@
 	import { page } from '$app/state';
 	import { modes } from '$lib/constants';
 	import { i } from '$lib/i.svelte';
+	import axios from 'axios';
 
 	function showProfileDB() {
 		$showPD = !$showPD;
@@ -28,13 +29,7 @@
 
 	async function submit_username() {
 		try {
-			const res = await fetch('/', {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ t: username_val })
-			});
+			const res = await axios.put('/',{ t: username_val })
 			if (res.ok) {
 				page.data.user.t = username_val;
 				i.editing_username = false;
@@ -305,5 +300,36 @@
 		transform: scale(1);
 		opacity: 1;
 		pointer-events: all;
+	}
+	.username-edit {
+		font-size: inherit;
+		padding: 0.6rem 0.8rem;
+		border: 1px solid #ccc;
+		border-radius: 8px;
+		background-color: #fff;
+		transition:
+			border-color 0.2s ease,
+			box-shadow 0.2s ease;
+		width: auto;
+		min-width: 180px;
+	}
+	.username-edit:focus {
+		outline: none;
+		border-color: #888;
+		box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+	}
+	.submit-username,
+	.cancel-username {
+		background: none;
+		border: none;
+		padding: 0 0.4rem;
+		cursor: pointer;
+		font-size: 1.1rem;
+		color: #555;
+		transition: color 0.2s ease;
+	}
+	.submit-username:hover,
+	.cancel-username:hover {
+		color: #000;
 	}
 </style>
