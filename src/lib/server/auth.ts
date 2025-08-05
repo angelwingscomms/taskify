@@ -5,8 +5,6 @@ import type { User } from '$lib/types';
 import { v7 } from 'uuid';
 import type { RequestEvent } from '@sveltejs/kit';
 
-export const google = new Google(GOOGLE_ID, GOOGLE_SECRET, GOOGLE_REDIRECT_URL);
-
 export const sessionCookieName = 'auth_session';
 
 interface Session {

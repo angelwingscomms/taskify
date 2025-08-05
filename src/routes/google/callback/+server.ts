@@ -1,5 +1,5 @@
-import { createSession, google, setSessionTokenCookie } from '$lib/server/auth';
-import { decodeIdToken } from 'arctic';
+import { createSession, setSessionTokenCookie } from '$lib/server/auth';
+import { decodeIdToken, Google } from 'arctic';
 
 import { error, redirect, type RequestEvent } from '@sveltejs/kit';
 import type { OAuth2Tokens } from 'arctic';
@@ -7,6 +7,7 @@ import { create_user } from '$lib/auth';
 import { searchByPayload } from '$lib/db';
 import { internal_error } from '$lib/util/internal_error'
 import type { User } from '$lib/types';
+import { GOOGLE_ID, GOOGLE_SECRET } from '$env/static/private';
 
 export async function GET(event: RequestEvent): Promise<Response> {
 	const code = event.url.searchParams.get('code');
@@ -26,6 +27,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 
 	let tokens: OAuth2Tokens;
 	try {
+	    const google = new Google(GOOGLE_ID, GOOGLE_SECRET, event.url.origin + '/google/callback')
 		tokens = await google.validateAuthorizationCode(code, codeVerifier);
 	} catch {
 		// Invalid code or client credentials

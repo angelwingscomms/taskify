@@ -8,6 +8,7 @@ https://svelte.dev/e/js_parse_error -->
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
+	import { createDraggable } from 'animejs';
 	import {
 		searchInput,
 		breakpoint,
@@ -27,6 +28,8 @@ https://svelte.dev/e/js_parse_error -->
 	let websocket: WebSocket | undefined = undefined;
 
 	let { t }: { t: _Task[] } = $props();
+	
+	// createDraggable('.')
 
 	// $offlineTasks = [];
 	i.tasks = t;
@@ -84,9 +87,9 @@ https://svelte.dev/e/js_parse_error -->
 				o: true,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
-			if (websocket) websocket.send(task)
 			i.tasks = [...i.tasks, task];
 			name = '';
+			if (websocket) websocket.send(JSON.stringify(task))
 			$taskInput?.focus();
 			scrollContent(osTaskList);
 

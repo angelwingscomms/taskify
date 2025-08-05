@@ -1,12 +1,12 @@
-import { generateState, generateCodeVerifier } from 'arctic';
-import { google } from '$lib/server/auth';
+import { generateState, generateCodeVerifier, Google } from 'arctic';
 
 import type { RequestEvent } from '@sveltejs/kit';
+import { GOOGLE_ID, GOOGLE_SECRET } from '$env/static/private';
 
 export async function GET(event: RequestEvent): Promise<Response> {
-  
 	const state = generateState();
 	const codeVerifier = generateCodeVerifier();
+	const google = new Google(GOOGLE_ID, GOOGLE_SECRET, event.url.origin + '/google/callback');
 	const url = google.createAuthorizationURL(state, codeVerifier, ['openid', 'profile', 'email']);
 
 	event.cookies.set('google_oauth_state', state, {

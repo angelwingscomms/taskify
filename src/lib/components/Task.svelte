@@ -7,14 +7,16 @@
 	import type { Mode, Task } from '$lib/types';
 	import MoreActions from './MoreActions.svelte';
 	import { date_format } from '$lib/util/date_format';
+	import { height_w_margin } from '$lib/util/height_w_margin';
 	interface Props {
 		task: Task;
 		i: number;
+		height?: number;
 		websocket: WebSocket | undefined;
 		onclick: (e: Event) => void;
 	}
-
-	let { task = $bindable(), websocket, i, onclick }: Props = $props();
+	
+	let { task = $bindable(), websocket, height, i, onclick }: Props = $props();
 	let hover = $state(false);
 	let show_ma = false;
 	// function showMoreActions(e) {
@@ -60,7 +62,7 @@
 	});
 </script>
 
-<li class:offline-task={task.o} onclick={self(bubble('click'))}>
+<li use:height_w_margin={height} class:offline-task={task.o} onclick={self(bubble('click'))}>
 	<div>
 		<button
 			class="complete"
