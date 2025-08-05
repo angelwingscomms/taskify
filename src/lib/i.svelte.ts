@@ -6,9 +6,14 @@ class App {
 	mode: Mode = $state('a');
 	search: string = $state('');
 	editing_username = $state(false);
+	delete_account_open = $state(false);
+	show_prop_sm = $state(false);
 	change_password_open = $state(false);
 	x: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && !t.c && t.x);
+	});
+	y: Task[] = $derived.by(() => {
+		return i.tasks.filter((t) => !t.t && !t.c && t.y);
 	});
 	c: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && t.c);

@@ -11,6 +11,7 @@ export const modes: Record<Mode, {icon_classes: string, text: string}> = {
   x: { icon_classes: 'far fa-flag', text: 'Important' },
   c: { icon_classes: 'far fa-circle-check', text: 'Completed' },
   t: { icon_classes: 'far fa-trash-can', text: 'Trash' },
+  y: { icon_classes: 'fas fa-calendar-day', text: 'Today'},
   s: { icon_classes: 'fas fa-magnifying-glass', text: 'Search results'}
 }
 

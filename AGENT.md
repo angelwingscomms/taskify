@@ -10,7 +10,7 @@ start every task by creating a telegraphic speech list that details the task int
 
 - always use in src/lib/db/index.ts for db ops
 - always use api routes to get data from client to server, e.g routes/search/+server.ts
-- always use src/lib/toast.ts for toast notifs
+- always use src/lib/util/toast.ts for toast notifs
 
 - in server files(e.g endpoint or page load), use error from '@sveltejs/kit': throw error(404, 'Resource not found')
 - get logged in user on server from locals.user

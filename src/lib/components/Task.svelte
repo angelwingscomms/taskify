@@ -48,6 +48,7 @@
 	};
 
 	let taskname: HTMLSpanElement | undefined = $state();
+	let editing = $state(false);
 
 	// Function to check for text wrapping and update styles
 	let wrapSwitch: boolean = $state(false);
@@ -95,7 +96,7 @@
 	class="drag-task"
 	use:get_height
 	class:offline-task={task.o}
-	onclick={self(bubble('click'))}
+	onclick={onclick}
 >
 	<div>
 		<button
@@ -111,20 +112,54 @@
 			></i>
 		</button>
 
-		<span
-			class:line-through={task.c}
-			class:fade-text={task.c}
-			onclick={(event) => {
-				if (event.target === event.currentTarget) onclick();
-			}}
-			id="taskName"
-			bind:this={taskname}
-			class:mgTop0={wrapSwitch}
-		>
-			{task.n}
-		</span>
-
+		{#if editing}
+			<input
+				type="text"
+				bind:value={task.n}
+				onblur={() => {
+					editing = false;
+					if (task.i && websocket) {
+						let data = { n: task.n, i: task.i };
+						websocket.send(JSON.stringify(data));
+						axios.put('/', data);
+					}
+				}}
+				onkeydown={(e) => {
+					if (e.key === 'Enter') {
+						editing = false;
+						if (task.i && websocket) {
+							let data = { n: task.n, i: task.i };
+							websocket.send(JSON.stringify(data));
+							axios.put('/', data);
+						}
+					}
+				}}
+				class="task-name-input"
+				class:line-through={task.c}
+				class:fade-text={task.c}
+			/>
+		{:else}
+			<span
+				class:line-through={task.c}
+				class:fade-text={task.c}
+				onclick={(event) => {
+					if (event.target === event.currentTarget) onclick();
+				}}
+				id="taskName"
+				bind:this={taskname}
+				class:mgTop0={wrapSwitch}
+			>
+				{task.n}
+			</span>
+		{/if}
 		<div class="button-cont">
+			<button
+				onclick={() => (editing = !editing)}
+				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"
+				data-tooltip="Flag as important"
+			>
+				<i class={editing ? 'fas fa-check' : 'far fa-pen-to-square'}></i>
+			</button>
 			<button
 				onclick={(e) => {
 					toggle_property(task, 'x');
@@ -145,7 +180,7 @@
 			>
 				<i class="far fa-trash-can"></i>
 			</button>
-			<MoreActions {i} />
+			<MoreActions p={task.t} {i} />
 		</div>
 	</div>
 	<div

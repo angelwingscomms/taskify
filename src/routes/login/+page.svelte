@@ -85,7 +85,10 @@
 		</div>
 
 		<div class="mt-6 text-center">
-			<a href="/google" class="google-login-button"> Login with Google </a>
+			<a href="/google" class="google-login-button">
+				<i class="fa-brands fa-google google-logo"></i>
+				Login with Google
+			</a>
 		</div>
 	</div>
 </div>
@@ -226,16 +229,26 @@
 		padding: 0.5rem 1rem; /* Equivalent to py-2 px-4 */
 		border-radius: 0.25rem; /* Equivalent to rounded */
 		display: inline-block;
-		width: 100%;
 		vertical-align: baseline;
 		text-align: center;
 		text-decoration: none; /* Remove underline from anchor */
 		transition: all 150ms ease;
+		display: flex; /* Make it a flex container */
+		align-items: center; /* Vertically center items */
+		justify-content: center; /* Horizontally center items */
+		margin: 0 auto; /* Center the button horizontally */
+		/* The previous width: 100% is removed to allow for horizontal centering */
 	}
 
 	.google-login-button:hover {
 		background-color: crimson;
 		color: var(--clr-white);
+	}
+
+	.google-logo {
+		width: 1.25rem; /* Equivalent to w-5 */
+		height: 1.25rem; /* Equivalent to h-5 */
+		margin-right: 0.5rem; /* Equivalent to mr-2 */
 	}
 
 	/* Handling margins for buttons divs */

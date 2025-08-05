@@ -16,6 +16,7 @@
 	import { i } from '$lib/i.svelte';
 	import axios from 'axios';
 	import ChangePasswordModal from './change_password_modal.svelte';
+	import DeleteAccountModal from './delete_account_modal.svelte';
 
 	function showProfileDB() {
 		$showPD = !$showPD;
@@ -94,6 +95,7 @@
 		}
 	}}
 />
+<DeleteAccountModal />
 <ChangePasswordModal />
 <aside class:showAside={$sideBarOpen}>
 	<div class="aside-top" class:asideScrolled={scrolled}>
@@ -101,6 +103,8 @@
 			<button class="dropdown-activator" class:showPD={$showPD} onclick={showProfileDB}>
 				{#if page.data.user?.p}
 					<img class="avatar" src={page.data.user?.p} alt="user profile picture" />
+				{:else}
+					<i class="far fa-user"></i>
 				{/if}
 				{#if i.editing_username}
 					<input
@@ -143,6 +147,13 @@
 					<a href="#">
 						<i class="far fa-image"></i>
 						Change image
+					</a>
+				</li>
+
+				<li>
+					<a onclick={() => (i.delete_account_open = true)} href="#">
+						<i class="fas fa-trash-can"></i>
+						Delete account
 					</a>
 				</li>
 				<hr />

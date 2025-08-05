@@ -2,6 +2,7 @@ export type Task = {
 	t?: number; // trash
 	c?: number; // completed
 	x?: number; // important
+	y?: number; // today
 	d: number; // date
 	n: string; // name
 	s?: string; // tenant-id
@@ -21,4 +22,4 @@ export interface User {
 	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
 
-export type Mode = 't' | 'x' | 'c' | 'a' | 's';
+export type Mode = 't' | 'x' | 'c' | 'a' | 's' | 'y';

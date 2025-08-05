@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { outside_click } from '$lib/utilities/outside_click';
-	let { i } = $props();
+	let { i, p } = $props();
 	let show_ma = $state(false);
 	function showMoreActions(e) {
 		e.stopPropagation();
@@ -23,12 +23,16 @@
 			Flag as important
 		</li>
 		<li>
+			<i class="fas fa-flag"></i>
+			Duplicate
+		</li>
+		<li>
 			<i class="far fa-calendar"></i>
 			Pick a date
 		</li>
 		<li style="color: crimson">
 			<i class="far fa-trash-can"></i>
-			Delete task
+			{p ? 'Permanently delete' : 'Delete task'}
 		</li>
 	</ul>
 </div>

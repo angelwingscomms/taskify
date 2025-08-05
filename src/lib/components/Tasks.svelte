@@ -21,6 +21,7 @@ https://svelte.dev/e/js_parse_error -->
 	import { PUBLIC_WORKER } from '$env/static/public';
 	import { i } from '$lib/i.svelte';
 	import { modes } from '$lib/constants';
+	import TaskProperties from './TaskProperties.svelte';
 
 	let name = $state('');
 	let taskList: HTMLUListElement;
@@ -94,6 +95,7 @@ https://svelte.dev/e/js_parse_error -->
 				p: i.p++,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
+			if (i.mode === 'y') task.y = 1;
 			i.tasks = [...i.tasks, task];
 			name = '';
 			if (websocket) websocket.send(JSON.stringify(task));
@@ -172,11 +174,13 @@ https://svelte.dev/e/js_parse_error -->
 
 	// Function to toggle task properties panel
 	let task_prop: HTMLDivElement;
-	let show_prop_lg: boolean = false;
+	let show_prop_lg: boolean = $state(false);
 	function toggle_task_prop(e: Event) {
+		console.log('ttp');
 		show_sidebar = true;
+
 		if ($breakpoint?.matches) {
-			$showPropSm = true;
+			i.show_prop_sm = true;
 			$sidebarOverlay = true;
 		} else {
 			show_prop_lg = true;
@@ -299,7 +303,7 @@ https://svelte.dev/e/js_parse_error -->
 		let yDiff = startY - endY;
 
 		if (yDiff > 50) {
-			$showPropSm = false;
+			i.show_prop_sm = false;
 			$sidebarOverlay = false;
 		}
 		startY = null;
@@ -399,35 +403,4 @@ https://svelte.dev/e/js_parse_error -->
 	</div>
 </div>
 
-<div
-	class:show_prop_lg
-	class:show_prop_sm={$showPropSm}
-	class="task-properties"
-	bind:this={task_prop}
->
-	<div
-		class="puller"
-		on:touchstart={handleTouchStart}
-		on:touchmove={handleTouchMove}
-		on:touchend={handleTouchEnd}
-	></div>
-	<div>
-		<button
-			class="tpClose"
-			on:click={() => {
-				show_sidebar = false;
-			}}><i class="fas fa-xmark"></i></button
-		>
-	</div>
-	<OverlayScrollbarsComponent style="flex: 1 0 0;" defer>
-		<div class="tpTop">
-			<div class="taskName">Task Name</div>
-			<div class="taskDesc">Description</div>
-			<div class="addFile">Add file</div>
-			<div></div>
-			<div></div>
-			<div></div>
-		</div>
-	</OverlayScrollbarsComponent>
-	<div class="tpFooter">Footer</div>
-</div>
+<TaskProperties closeTaskPropLg={close_task_prop} ontouchend={handleTouchEnd} ontouchmove={handleTouchMove} ontouchstart={handleTouchStart} {show_prop_lg} />

@@ -26,7 +26,7 @@
 		$sidebarOverlay = false;
 		$taskDropdownOverlay = false;
 		$inputOverlay = false;
-		$showPropSm = false;
+		i.show_prop_sm = false;
 		$sideBarOpen = false;
 		$taskInput?.blur();
 		$showPD = false;
