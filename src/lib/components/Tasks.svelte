@@ -8,7 +8,7 @@ https://svelte.dev/e/js_parse_error -->
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 	import { scrollContent } from '$lib/utilities/osScrollTop';
 	import Task from '$lib/components/Task.svelte';
-	import { animate, createDraggable, utils } from 'animejs';
+	// import { animate, createDraggable, utils } from 'animejs';
 	import {
 		searchInput,
 		breakpoint,
@@ -39,6 +39,8 @@ https://svelte.dev/e/js_parse_error -->
 	// // : $offlineTasks.sort((a, b) => b.d - a.d);
 
 	$effect(() => console.log(task_height));
+	let show_sidebar: boolean = false;
+	// Sidebar styling can be enhanced here if needed
 
 	$effect(() => {
 		websocket = new WebSocket('ws' + PUBLIC_WORKER + '/' + 'tasks');
@@ -169,16 +171,15 @@ https://svelte.dev/e/js_parse_error -->
 	}
 
 	// Function to toggle task properties panel
-	let taskProp: HTMLDivElement;
-	let showPropLg: boolean;
-	function toggleTaskProp(e: Event) {
+	let task_prop: HTMLDivElement;
+	let show_prop_lg: boolean = false;
+	function toggle_task_prop(e: Event) {
+		show_sidebar = true;
 		if ($breakpoint?.matches) {
-			// Small screen
 			$showPropSm = true;
 			$sidebarOverlay = true;
 		} else {
-			// Large screen
-			showPropLg = !showPropLg;
+			show_prop_lg = true;
 		}
 		// e.stopPropagation();
 	}
@@ -304,8 +305,8 @@ https://svelte.dev/e/js_parse_error -->
 		startY = null;
 	}
 
-	function closeTaskPropLg() {
-		showPropLg = false;
+	function close_task_prop() {
+		show_prop_lg = false;
 	}
 </script>
 
@@ -316,7 +317,7 @@ https://svelte.dev/e/js_parse_error -->
 <svelte:window
 	on:keydown={(e) => {
 		if (
-		    !i.editing_username &&
+			!i.editing_username &&
 			e.key.match(/^[a-zA-Z0-9/]$/) &&
 			document.activeElement !== $taskInput &&
 			document.activeElement !== $searchInput
@@ -346,29 +347,24 @@ https://svelte.dev/e/js_parse_error -->
 	</div>
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
-	{#await i[i.mode]}
-	<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-		<i class="fas fa-spinner fa-spin fa-4x"></i>
-	</div>
-{:then tasks}
-<ul class="task-list" bind:this={taskList}>
-			{#each tasks as task, i (task.i)}
-				<Task
-					bind:height={task_height}
-					{websocket}
-					{task}
-					{i}
-					onclick={toggleTaskProp}
-				/>
-			{/each}
-		</ul>{:catch}
-		<div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; color: var(--error-color, #dc3545);">
-			<i class="fas fa-exclamation-triangle fa-4x" style="margin-bottom: 20px;"></i>
-			<p style="font-size: 1.2em; font-weight: bold;">Task Search Failed</p>
-			<p>There was an error on our side.</p>
-		</div>
-{/await}
-		
+		{#await i[i.mode]}
+			<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+				<i class="fas fa-spinner fa-spin fa-4x"></i>
+			</div>
+		{:then tasks}
+			<ul class="task-list" bind:this={taskList}>
+				{#each tasks as task, i (task.i)}
+					<Task bind:height={task_height} {websocket} {task} {i} onclick={toggle_task_prop} />
+				{/each}
+			</ul>{:catch}
+			<div
+				style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; color: var(--error-color, #dc3545);"
+			>
+				<i class="fas fa-exclamation-triangle fa-4x" style="margin-bottom: 20px;"></i>
+				<p style="font-size: 1.2em; font-weight: bold;">Task Search Failed</p>
+				<p>There was an error on our side.</p>
+			</div>
+		{/await}
 	</OverlayScrollbarsComponent>
 
 	{#if i.tasks.length === 0}
@@ -402,7 +398,12 @@ https://svelte.dev/e/js_parse_error -->
 	</div>
 </div>
 
-<div class:showPropLg class:showPropSm={$showPropSm} class="task-properties" bind:this={taskProp}>
+<div
+	class:show_prop_lg
+	class:show_prop_sm={$showPropSm}
+	class="task-properties"
+	bind:this={task_prop}
+>
 	<div
 		class="puller"
 		on:touchstart={handleTouchStart}
@@ -410,7 +411,12 @@ https://svelte.dev/e/js_parse_error -->
 		on:touchend={handleTouchEnd}
 	></div>
 	<div>
-		<button class="tpClose" on:click={closeTaskPropLg}><i class="fas fa-xmark"></i></button>
+		<button
+			class="tpClose"
+			on:click={() => {
+				show_sidebar = false;
+			}}><i class="fas fa-xmark"></i></button
+		>
 	</div>
 	<OverlayScrollbarsComponent style="flex: 1 0 0;" defer>
 		<div class="tpTop">

@@ -7,7 +7,7 @@ import { collection } from '$lib/constants';
 import type { User } from '$lib/types';
 import { embed } from '$lib/util/embed';
 
-export interface PayloadFilter extends Record<string, unknown> {}
+export type PayloadFilter = Record<string, unknown>;
 
 // Qdrant client configuration
 export const qdrant = new QdrantClient({

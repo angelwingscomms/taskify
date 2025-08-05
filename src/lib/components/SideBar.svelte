@@ -29,20 +29,17 @@
 		username_val = page.data.user?.t;
 	}
 
-	async function submit_username() {
+	  const submit_username = async () => {
 		username_edit_loading = true;
 		try {
 			const res = await axios.put('/edit_user', { t: username_val });
-			if (res.ok) {
-				page.data.user.t = username_val;
-				let username_val = page.data.user?.t || '';
-			} else {
-				alert('an error occured on our side');
-			}
+			console.log(res)
+			page.data.user.t = username_val;
 		} catch (err) {
+		console.log(err)
 			alert('an error occured on our side');
 		} finally {
-			editing_username = false;
+			i.editing_username = false;
 			username_edit_loading = false;
 		}
 	}

@@ -16,6 +16,7 @@ export interface User {
 	e: string; // email
 	s?: string // tenant-id
 	ph: string; // password hash
+  p: string; // picture
   i: string; // id
 	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
