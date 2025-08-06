@@ -223,14 +223,16 @@
 						onkeydown={(e) => {
 							if (e.key === 'Enter') add();
 						}}
+						onfocus={() => i.subtask_input = true}
+						onblur={() => i.subtask_input = false}
 						bind:value={subtask_input_name}
 						type="text"
 						id="subtask-input"
 						placeholder="Add a subtask"
 					/>
-					{#if !subtask_input_name}
-						<span aria-label="/">/</span>
-					{:else}
+					{#if subtask_input_name}
+						<!-- <span aria-label="/">/</span>
+					{:else} -->
 						<button onclick={add}><i class="fas fa-circle-arrow-up" id="upload-icon"></i></button>
 					{/if}
 				</div>

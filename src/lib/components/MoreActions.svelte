@@ -23,7 +23,7 @@
 			Flag as important
 		</li>
 		<li>
-			<i class="fas fa-flag"></i>
+		<i class="far fa-copy"></i>
 			Duplicate
 		</li>
 		<li>

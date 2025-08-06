@@ -322,6 +322,7 @@ https://svelte.dev/e/js_parse_error -->
 		if (
 			!i.editing_username &&
 			!i.change_password_open &&
+			!i.subtask_input &&
 			e.key.match(/^[a-zA-Z0-9/]$/) &&
 			document.activeElement !== $taskInput &&
 			document.activeElement !== $searchInput
