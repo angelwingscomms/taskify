@@ -2,14 +2,9 @@ import type { RequestHandler } from './$types';
 import { collection, task_tenant_id } from '$lib/constants';
 import { client } from '$lib/utilities/qdrant';
 import { embed } from '$lib/util/embed';
-import { get, search_by_vector, set } from '$lib/db';
+import { get, set } from '$lib/db';
 import type { Task } from '$lib/types';
-import { error, json } from '@sveltejs/kit';
-import { internal_error } from '$lib/util/internal_error';
-
-export const GET: RequestHandler = async ({ url, locals }) => {
-	return json(await search_by_vector({ limit: 4, filter: {u: locals.user.i}, vector: await embed(url.searchParams.get('q') || '') }));
-};
+import { error } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -34,7 +29,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return new Response(i);
 	} catch (err) {
 		console.error(err);
-		internal_error();
+		error(500);
 	}
 };
 
@@ -70,6 +65,6 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 		return new Response('Task updated successfully');
 	} catch (err) {
 		console.error(err);
-		internal_error();
+		error(500);
 	}
 };

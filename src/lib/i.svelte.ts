@@ -8,6 +8,7 @@ class App {
 	editing_username = $state(false);
 	delete_account_open = $state(false);
 	show_prop_sm = $state(false);
+	current_task: Task | null = $state(null)
 	change_password_open = $state(false);
 	x: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && !t.c && t.x);
@@ -25,9 +26,13 @@ class App {
 		return i.tasks.filter((t) => !t.t && !t.c);
 	});
 	s: Promise<Task[]> = $derived.by(async () => {
-		if (!this.search) return;
-		// await new Promise((r) => setTimeout(r, 2160));
-		const res = await axios.get('/?q=' + this.search);
+		if (!this.search) return; //todo - throttle?
+		const res = await axios.post('/search' + { s: this.search});
+		if (res.statusText === 'OK') return res.data;
+	});
+	subtasks: Promise<Task[]> = $derived.by(async () => {
+		if (!this.current_task) return;
+    const res = await axios.post('/search' + { f: {i: this.current_task.i}});
 		if (res.statusText === 'OK') return res.data;
 	});
 	p = $state(0);

@@ -176,9 +176,9 @@
 					e.stopPropagation();
 				}}
 				class="task-buttons {i > 0 ? 'tooltip-top' : 'tooltip-left'}"
-				data-tooltip="Move to trash"
+				data-tooltip={task.t ? "Restore" : "Move to trash"}
 			>
-				<i class="far fa-trash-can"></i>
+				<i class={task.t ? "fas fa-trash-arrow-up" :"far fa-trash-can"}></i>
 			</button>
 			<MoreActions p={task.t} {i} />
 		</div>

@@ -175,10 +175,9 @@ https://svelte.dev/e/js_parse_error -->
 	// Function to toggle task properties panel
 	let task_prop: HTMLDivElement;
 	let show_prop_lg: boolean = $state(false);
-	function toggle_task_prop(e: Event) {
-		console.log('ttp');
+	function toggle_task_prop(task: _Task) {
 		show_sidebar = true;
-
+		i.current_task = task;
 		if ($breakpoint?.matches) {
 			i.show_prop_sm = true;
 			$sidebarOverlay = true;
@@ -359,7 +358,13 @@ https://svelte.dev/e/js_parse_error -->
 		{:then tasks}
 			<ul class="task-list" bind:this={taskList}>
 				{#each tasks as task, i (task.i)}
-					<Task bind:height={task_height} {websocket} {task} {i} onclick={toggle_task_prop} />
+					<Task
+						bind:height={task_height}
+						{websocket}
+						{task}
+						{i}
+						onclick={() => toggle_task_prop(task)}
+					/>
 				{/each}
 			</ul>{:catch}
 			<div
@@ -403,4 +408,10 @@ https://svelte.dev/e/js_parse_error -->
 	</div>
 </div>
 
-<TaskProperties closeTaskPropLg={close_task_prop} ontouchend={handleTouchEnd} ontouchmove={handleTouchMove} ontouchstart={handleTouchStart} {show_prop_lg} />
+<TaskProperties
+	closeTaskPropLg={close_task_prop}
+	ontouchend={handleTouchEnd}
+	ontouchmove={handleTouchMove}
+	ontouchstart={handleTouchStart}
+	{show_prop_lg}
+/>

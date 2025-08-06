@@ -1,6 +1,8 @@
-Let your speech always be short and consice, focusing more on the code edits.
+- Let your speech always be short and consice, focusing more on the code edits.
 
-start every task by creating a telegraphic speech list that details the task into many small micro-tasks, then do each micro-task.
+- start every task by creating a list that details the task into many small micro-tasks, then do each micro-task.
+
+- before writing any styles, look closely at app.css to see how the site is styled. Write same styles
 
 - all db data stored in single Qdrant collection `'i'`, `s` payload field isolates data types (e.g., 'u` for user id).
 - always use single/double letter field names for db (`t` user tag, `u` user id, `s` tenant id)

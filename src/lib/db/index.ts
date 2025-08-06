@@ -37,9 +37,7 @@ export const set = async (id: string, payload: Record<string, unknown>) => {
 };
 
 // Database operations wrapper
-export async function edit_point<T>(
-	data: T
-): Promise<T & { i: string }> {
+export async function edit_point<T>(data: T): Promise<T & { i: string }> {
 	const i = data.i || generateId();
 
 	const vector = new Array(3072).fill(0);
@@ -183,10 +181,7 @@ export async function delete_by_id(id: string): Promise<void> {
 	});
 }
 
-export async function update_point<T>(
-	id: string,
-	data: Partial<T>
-): Promise<void> {
+export async function update_point<T>(id: string, data: Partial<T>): Promise<void> {
 	const existing = await get<T>(id);
 	if (!existing) {
 		throw new Error('Document not found');
