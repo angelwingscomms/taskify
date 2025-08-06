@@ -1,8 +1,6 @@
 import type { RequestHandler } from './$types';
-import { collection, task_tenant_id } from '$lib/constants';
-import { client } from '$lib/utilities/qdrant';
-import { embed } from '$lib/util/embed';
-import { get, set } from '$lib/db';
+import {  task_tenant_id } from '$lib/constants';
+import { create, get, set } from '$lib/db';
 import type { Task } from '$lib/types';
 import { error } from '@sveltejs/kit';
 
@@ -12,7 +10,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('data', data);
 		data.u = locals.user.i;
 		data.s = task_tenant_id;
-		if (!data.i) error(400, 'missing tasl id `i`');
+		if (!data.i) error(400, 'missing task id `i`');
 		if (data.a) {
 			const existingTask = await get<{ a: string[] }>(data.i, ['a']);
 			const currentAncestors: string[] = Array.isArray(existingTask?.a) ? existingTask.a : [];
@@ -35,14 +33,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				await set(ancestor[0], ancestor[1]);
 			}
 			await set(data.i, { a: data.a });
+			delete data.a
 		}
 		const i = data.i;
 		delete data.i;
-		await set(i, data);
+		await create(i, data);
 		// await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { ...data, i });
 		return new Response(i);
 	} catch (err) {
-		console.error(err);
+		console.error(err, err.stack);
 		error(500);
 	}
 };

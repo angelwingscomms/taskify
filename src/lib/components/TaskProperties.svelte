@@ -98,25 +98,12 @@
 			websocket.send(JSON.stringify(new_subtask));
 		}
 
-		// Persist to server with retry logic
-		const maxRetries = 9;
-		const initialDelayMs = 500;
-		for (let attempt = 0; attempt <= maxRetries; attempt++) {
-			try {
-				await axios.post('/', new_subtask);
-				toast.success('Subtask added!');
-				break; // Success, exit loop
-			} catch (error) {
-				console.error(`Attempt ${attempt + 1} of ${maxRetries + 1} to add subtask failed:`, error);
-				if (attempt < maxRetries) {
-					const delay = initialDelayMs * Math.pow(2, attempt);
-					await new Promise((resolve) => setTimeout(resolve, delay));
-				} else {
-					toast.error('Failed to add subtask after multiple attempts. Please try again.');
-					// Revert optimistic update if all retries fail
-					i.subtasks = i.subtasks.filter((st) => st.i !== new_subtask.i);
-				}
-			}
+		try {
+			await axios.post('/', new_subtask);
+			toast.success('Subtask added!');
+		} catch (error) {
+			console.log('failed to add subtask to cloud', error);
+			alert('failed to add subtask to cloud');
 		}
 	}
 

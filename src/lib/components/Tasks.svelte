@@ -102,26 +102,11 @@ https://svelte.dev/e/js_parse_error -->
 			$taskInput?.focus();
 			scrollContent(osTaskList);
 
-			const maxRetries = 9; // Number of retries after the initial attempt
-			const initialDelayMs = 500; // Initial delay in milliseconds for retries
-			for (let attempt = 0; attempt <= maxRetries; attempt++) {
-				try {
-					await axios.post('/', task);
-					break;
-				} catch (error) {
-					console.error(`Attempt ${attempt + 1} of ${maxRetries + 1} to add task failed:`, error);
-					if (attempt < maxRetries) {
-						// Calculate exponential backoff delay
-						const delay = initialDelayMs * Math.pow(2, attempt);
-						await new Promise((resolve) => setTimeout(resolve, delay));
-					} else {
-						// All retries exhausted, log the final failure.
-						// Original code had an empty catch, so we won't rethrow.
-						console.error(
-							'All attempts to add task failed. Task may not be synchronized with the server.'
-						);
-					}
-				}
+			try {
+				await axios.post('/', task);
+			} catch (error) {
+				console.log('failed to add task to cloud', error);
+				alert('failed to add task to cloud');
 			}
 		}
 	}
