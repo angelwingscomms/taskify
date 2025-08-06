@@ -17,6 +17,7 @@
 	import axios from 'axios';
 	import ChangePasswordModal from './change_password_modal.svelte';
 	import DeleteAccountModal from './delete_account_modal.svelte';
+	import { type Task } from '$lib/types';
 
 	function showProfileDB() {
 		$showPD = !$showPD;
@@ -209,9 +210,10 @@
 			{#each i.pinned_tasks as task (task.i)}
 				<a
 					onclick={() => {
-						i.parent_task = task;
+						i.parent_task = task as Task;
 						i.mode = 'p';
 					}}
+					class:active={i.parent_task?.i === task.i}
 					href="#"
 					class="menu-items"
 				>
