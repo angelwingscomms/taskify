@@ -4,7 +4,6 @@
 	import Task from './Task.svelte';
 	import axios from 'axios';
 	import { v7 } from 'uuid';
-	import { PUBLIC_WORKER } from '$env/static/public';
 	import { toast } from '$lib/util/toast';
 
 	let { show_prop_lg, ontouchstart, ontouchmove, ontouchend, closeTaskPropLg } = $props();
@@ -88,11 +87,12 @@
 			p_i: parent_task_id, // Parent ID for subtasks
 			o: true, // Optimistic update
 			d: Date.now(),
+			a: [i.current_task.i],
 			s: 't' // 't' for task, which includes subtasks
 		};
 
 		// Optimistically add to subtasks
-		i.subtasks = [...(i.subtasks || []), new_subtask];
+		i.subtasks = await Promise.all([...((await i.subtasks) || []), new_subtask]);
 		subtask_input_name = ''; // Clear input
 
 		// Send via WebSocket if available
@@ -122,46 +122,26 @@
 		}
 	}
 
-	// Initialize websocket for subtasks (and general task updates)
-	$effect(() => {
-		websocket = new WebSocket('ws' + PUBLIC_WORKER + '/' + 'tasks'); // Using 'tasks' endpoint, assuming it handles subtasks too
-
-		websocket.onopen = () => {
-			console.log('TaskProperties WebSocket connection opened.');
+	// Svelte action to manage i.task_input_autofocus_off on focus/blur
+	const override_task_input_autofocus = (node: HTMLElement) => {
+		const handleFocus = () => {
+			i.task_input_autofocus_off = true;
 		};
 
-		websocket.onmessage = (event) => {
-			let data = JSON.parse(event.data);
-			// Check if the received data is a subtask for the current parent task
-			if (i.current_task && data.p_i === i.current_task.i) {
-				let existing_subtask_index = (i.subtasks || []).findIndex((st) => st.i === data.i);
-				if (existing_subtask_index > -1) {
-					const subtask = i.subtasks[existing_subtask_index];
-					if (!data.o && subtask.o) delete subtask.o; // Remove optimistic flag if server confirms
-					i.subtasks[existing_subtask_index] = { ...subtask, ...data };
-				} else {
-					// Add if not found
-					i.subtasks = [...(i.subtasks || []), data];
-				}
+		const handleBlur = () => {
+			i.task_input_autofocus_off = false;
+		};
+
+		node.addEventListener('focus', handleFocus);
+		node.addEventListener('blur', handleBlur);
+
+		return {
+			destroy() {
+				node.removeEventListener('focus', handleFocus);
+				node.removeEventListener('blur', handleBlur);
 			}
 		};
-
-		websocket.addEventListener('close', (event) => {
-			console.log('TaskProperties WebSocket connection closed.', event.code, event.reason);
-		});
-
-		websocket.addEventListener('error', (err) => {
-			console.error('TaskProperties WebSocket error:', err);
-		});
-
-		// Cleanup function for $effect
-		return () => {
-			if (websocket) {
-				websocket.close();
-				websocket = undefined;
-			}
-		};
-	});
+	};
 </script>
 
 {#if i.current_task}
@@ -174,6 +154,7 @@
 			<div class="tpTop">
 				<input
 					class="task-name-input"
+					use:override_task_input_autofocus
 					bind:value={current_task_name}
 					placeholder="Task name"
 					onkeydown={(e) => {
@@ -183,6 +164,7 @@
 				/>
 				<label for="description-input">Description</label>
 				<textarea
+					use:override_task_input_autofocus
 					id="description-input"
 					class="task-description-input"
 					bind:value={current_task_description}
@@ -223,8 +205,7 @@
 						onkeydown={(e) => {
 							if (e.key === 'Enter') add();
 						}}
-						onfocus={() => i.subtask_input = true}
-						onblur={() => i.subtask_input = false}
+						use:override_task_input_autofocus
 						bind:value={subtask_input_name}
 						type="text"
 						id="subtask-input"

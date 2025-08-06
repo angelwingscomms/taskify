@@ -8,7 +8,7 @@ class App {
 	editing_username = $state(false);
 	delete_account_open = $state(false);
 	show_prop_sm = $state(false);
-	subtask_input = $state(false);
+	task_input_autofocus_off = $state(false);
 	current_task: Task | null = $state(null)
 	change_password_open = $state(false);
 	x: Task[] = $derived.by(() => {
