@@ -44,6 +44,8 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 
 		const i = data.i;
 		delete data.i;
+		
+		if (data.s) delete data.s
 
 		const task = await get<Task>(i);
 

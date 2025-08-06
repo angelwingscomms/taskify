@@ -25,3 +25,5 @@
 - always use Typescript
 - always use Svelte5 syntax - runes, onclick instead of on:click, and all such things
 - always use embed src/lib/embed.ts for embedding text
+
+- the 's' field on a qdrant point payload should NEVER be edited

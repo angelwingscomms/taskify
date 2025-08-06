@@ -201,4 +201,15 @@
 	.fade-text {
 		opacity: 0.6;
 	}
+	.task-name-input {
+		font-size: 14.4px; /* Similar to header-span in Tasks.svelte */
+		/* font-weight: 500; */
+		border: none;
+		outline: none;
+		background: none;
+		width: 100%;
+		color: var(--clr-main);
+		margin-bottom: 1rem;
+		padding: 0;
+	}
 </style>

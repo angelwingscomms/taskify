@@ -84,7 +84,7 @@ export async function create<T extends { i?: string; id?: string; s: string }>(
 	return id;
 }
 
-export const format_filters = (filters: PayloadFilter) => {
+export const format_filter = (filters: PayloadFilter) => {
 	return {
 		must: Object.entries(filters)
 			.filter(([, value]) => value !== undefined && value !== null && value !== '')
@@ -98,12 +98,14 @@ export const format_filters = (filters: PayloadFilter) => {
 export async function search_by_payload<T>(filters: PayloadFilter, limit?: number): Promise<T[]> {
 	const actual_limit = limit || 144;
 	try {
+	console.log('ff', filters)
 		const results = await qdrant.scroll(collection, {
-			filter: format_filters(filters),
+			...format_filter(filters),
 			limit: actual_limit,
 			with_payload: true,
 			with_vector: false
 		});
+		
 
 		// console.debug('search_by_payload results', results);
 
@@ -135,7 +137,7 @@ export async function search_by_vector<T>({
 		};
 
 		if (filter) {
-			searchParams.filter = format_filters(filter);
+			searchParams.filter = format_filter(filter);
 		}
 
 		const results = await qdrant.search(collection, searchParams);

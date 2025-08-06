@@ -33,7 +33,7 @@ class App {
 	});
 	subtasks: Promise<Task[]> = $derived.by(async () => {
 		if (!this.current_task) return;
-    const res = await axios.post('/search' + { f: {i: this.current_task.i}});
+    const res = await axios.post('/search', { f: {a: this.current_task.i}});
 		if (res.statusText === 'OK') return res.data;
 	});
 	p = $state(0);
