@@ -16,9 +16,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		);
 	} else {
 		return json(
-			await search_by_payload({
-        filter: { s: task_tenant_id, u: locals.user.i, ...search.f }
-			})
+			await search_by_payload({ s: task_tenant_id, u: locals.user.i, ...search.f })
 		);
 	}
 };

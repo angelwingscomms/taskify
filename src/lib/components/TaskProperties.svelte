@@ -80,11 +80,9 @@
 			return;
 		}
 
-		const parent_task_id = i.current_task.i;
 		const new_subtask = {
 			n: subtask_input_name.trim(),
 			i: v7(),
-			p_i: parent_task_id, // Parent ID for subtasks
 			o: true, // Optimistic update
 			d: Date.now(),
 			a: [i.current_task.i],

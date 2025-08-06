@@ -95,12 +95,11 @@ export const format_filter = (filters: PayloadFilter) => {
 	};
 };
 
-export async function search_by_payload<T>(filters: PayloadFilter, limit?: number): Promise<T[]> {
+export async function search_by_payload<T>(filter: PayloadFilter, limit?: number): Promise<T[]> {
 	const actual_limit = limit || 144;
 	try {
-	console.log('ff', filters)
 		const results = await qdrant.scroll(collection, {
-			...format_filter(filters),
+			filter: format_filter(filter),
 			limit: actual_limit,
 			with_payload: true,
 			with_vector: false
@@ -112,7 +111,7 @@ export async function search_by_payload<T>(filters: PayloadFilter, limit?: numbe
 		return results.points.map((point) => ({ ...(point.payload as T), i: point.id }));
 	} catch (error) {
 		console.error('Error in search_by_payload:', error);
-		console.error('Filters:', filters);
+		console.error('Filters:', filter);
 		throw error;
 	}
 }

@@ -12,7 +12,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		console.log('data', data);
 		data.u = locals.user.i;
 		data.s = task_tenant_id;
-		if (!data.i) error(400, 'missing i');
+		if (!data.i) error(400, 'missing tasl id `i`');
+		if (data.a) {
+			for (const ancestor_id of data.a) {
+				const ancestor = await get<{ c: string[] }>(ancestor_id, ['c']);
+				if (ancestor) {
+					if (!Array.isArray(ancestor.c)) {
+						ancestor.c = [];
+					}
+					ancestor.c.push(data.i);
+					await set(ancestor_id, ancestor);
+				} else {
+					error(422, `task ${ancestor_id} in body field \`s\` not found`);
+				}
+			}
+		}
 		const i = data.i;
 		delete data.i;
 		await client.upsert(collection, {
@@ -44,8 +58,8 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 
 		const i = data.i;
 		delete data.i;
-		
-		if (data.s) delete data.s
+
+		if (data.s) delete data.s;
 
 		const task = await get<Task>(i);
 

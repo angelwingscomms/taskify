@@ -19,10 +19,10 @@ export async function GET(event: RequestEvent): Promise<Response> {
 	// console.log('storedState:', storedState);
 	// console.log('codeVerifier:', codeVerifier);
 	if (code === null || state === null || storedState === null || codeVerifier === null) {
-	error(400)
+	error(500)
 	}
 	if (state !== storedState) {
-	error(400)
+	error(500)
 	}
 
 	let tokens: OAuth2Tokens;
@@ -32,7 +32,7 @@ export async function GET(event: RequestEvent): Promise<Response> {
 	} catch {
 		// Invalid code or client credentials
 		console.error('Invalid code or client credentials');
-		error(400)
+		error(500)
 	}
 	const res = decodeIdToken(tokens.idToken()) as {
 		sub: string;
