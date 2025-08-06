@@ -14,31 +14,31 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		data.s = task_tenant_id;
 		if (!data.i) error(400, 'missing tasl id `i`');
 		if (data.a) {
+			const existingTask = await get<{ a: string[] }>(data.i, ['a']);
+			const currentAncestors: string[] = Array.isArray(existingTask?.a) ? existingTask.a : [];
+			const incomingAncestors: string[] = Array.isArray(data.a) ? data.a : [data.a];
+			data.a = [...new Set([...currentAncestors, ...incomingAncestors])];
+			const ancestors = [];
 			for (const ancestor_id of data.a) {
 				const ancestor = await get<{ c: string[] }>(ancestor_id, ['c']);
 				if (ancestor) {
 					if (!Array.isArray(ancestor.c)) {
 						ancestor.c = [];
 					}
-					ancestor.c.push(data.i);
-					await set(ancestor_id, ancestor);
+					ancestor.c = [...new Set([...ancestor.c, data.i])];
+					ancestors.push([ancestor_id, ancestor]);
 				} else {
 					error(422, `task ${ancestor_id} in body field \`s\` not found`);
 				}
 			}
+			for (const ancestor of ancestors) {
+				await set(ancestor[0], ancestor[1]);
+			}
+			await set(data.i, { a: data.a });
 		}
 		const i = data.i;
 		delete data.i;
-		await client.upsert(collection, {
-			wait: true,
-			points: [
-				{
-					id: i,
-					vector: await embed(JSON.stringify(data)),
-					payload: data
-				}
-			]
-		});
+		await set(i, data);
 		// await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { ...data, i });
 		return new Response(i);
 	} catch (err) {

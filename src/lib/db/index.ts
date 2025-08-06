@@ -191,6 +191,10 @@ export async function update_point<T>(id: string, data: Partial<T>): Promise<voi
 	await edit_point({ ...existing, ...data, i: id });
 }
 
+export const exists = async (i: string): Promise<boolean> => {
+  return !!(await get(i, []));
+}
+
 // Get username from their ID
 export async function get_username_from_id(userId: string): Promise<string> {
 	const user = await get<{ u?: string }>(userId);
