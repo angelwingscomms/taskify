@@ -54,6 +54,21 @@ https://svelte.dev/e/js_parse_error -->
 		websocket.onmessage = (event) => {
 			console.log('event', event);
 			let data = JSON.parse(event.data);
+			if (data.__e) {
+				switch (data.__e) {
+					case 'p':
+						i.pinned_tasks.push(data.d);
+						break;
+					case 'pa': {
+						const targetPinnedTask = i.pinned_tasks.find((task) => task.i === data.i);
+						if (targetPinnedTask) {
+							targetPinnedTask.c = data.c;
+						}
+						break;
+					}
+				}
+				return;
+			}
 			let existing_task_index = i.tasks.findIndex((t) => t.i === data.i);
 			console.log(existing_task_index);
 			if (existing_task_index > -1) {
@@ -332,8 +347,13 @@ https://svelte.dev/e/js_parse_error -->
 
 <div class="task-area-cont">
 	<div class="task-header">
+	{#if i.mode === 'p' && i.parent_task}
+	<i class="fa-solid fa-sitemap header-icon"></i>
+		<span class="header-span">Subtasks of {i.parent_task.n}</span>
+	{:else}
 		<i class="{modes[i.mode].icon_classes} header-icon"></i>
 		<span class="header-span">{modes[i.mode].text}</span>
+	{/if}
 	</div>
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>

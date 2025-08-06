@@ -180,7 +180,7 @@
 			>
 				<i class={task.t ? "fas fa-trash-arrow-up" :"far fa-trash-can"}></i>
 			</button>
-			<MoreActions p={task.t} {i} />
+			<MoreActions {websocket} {task} {i} />
 		</div>
 	</div>
 	<div

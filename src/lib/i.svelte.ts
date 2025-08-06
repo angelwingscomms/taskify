@@ -2,7 +2,8 @@ import axios from 'axios';
 import type { Mode, Task } from './types';
 
 class App {
-	tasks: Task[] = $state([]);
+  tasks: Task[] = $state([]);
+  pinned_tasks: (Pick<Task, 'i' | 'n'> & { c: number })[] = $state([]);
 	mode: Mode = $state('a');
 	search: string = $state('');
 	editing_username = $state(false);
@@ -10,6 +11,7 @@ class App {
 	show_prop_sm = $state(false);
 	task_input_autofocus_off = $state(false);
 	current_task: Task | null = $state(null)
+	parent_task: Task | null = $state(null)
 	change_password_open = $state(false);
 	x: Task[] = $derived.by(() => {
 		return i.tasks.filter((t) => !t.t && !t.c && t.x);

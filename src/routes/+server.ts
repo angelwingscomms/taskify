@@ -1,8 +1,10 @@
 import type { RequestHandler } from './$types';
-import {  task_tenant_id } from '$lib/constants';
+import {  collection, task_tenant_id } from '$lib/constants';
 import { create, get, set } from '$lib/db';
 import type { Task } from '$lib/types';
 import { error } from '@sveltejs/kit';
+import { client } from '$lib/utilities/qdrant';
+import { embed } from '$lib/util/embed';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -37,7 +39,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 		const i = data.i;
 		delete data.i;
-		await create(i, data);
+		// await create(i, data);
+		await client.upsert(collection, {
+			wait: true,
+			points: [
+				{
+					id: i,
+					vector: await embed(JSON.stringify(data)),
+					payload: data
+				}
+			]
+		});
 		// await axios.post('http' + PUBLIC_WORKER + '/send/' + 'tasks', { ...data, i });
 		return new Response(i);
 	} catch (err) {

@@ -24,4 +24,4 @@ export interface User {
 	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
 
-export type Mode = 't' | 'x' | 'c' | 'a' | 's' | 'y';
+export type Mode = 't' | 'x' | 'c' | 'a' | 's' | 'y' | 'p';

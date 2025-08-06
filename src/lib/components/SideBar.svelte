@@ -206,91 +206,13 @@
 				{/if}
 			{/each}
 			<hr />
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">5</span>
-			</a>
-			<a href="#" class="menu-items">
-				<i class="fas fa-bars"></i>
-				<span class="menu-name">Grocery List</span>
-				<span class="list-amount">100</span>
-			</a>
+			{#each i.pinned_tasks as task (task.i)}
+				<a href="#" class="menu-items">
+					<i class="fas fa-bars"></i>
+					<span class="menu-name">{task.n}</span>
+					<span class="list-amount">{task.c}</span>
+				</a>
+			{/each}
 		</div>
 	</OverlayScrollbarsComponent>
 	<div class="new-list-cont">

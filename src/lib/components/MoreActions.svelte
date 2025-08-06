@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { outside_click } from '$lib/utilities/outside_click';
-	let { i, p } = $props();
+	let { task, websocket } = $props();
 	let show_ma = $state(false);
 	function showMoreActions(e) {
 		e.stopPropagation();
@@ -10,7 +10,7 @@
 </script>
 
 <div use:outside_click onoutside_click={() => (show_ma = false)} class="more-actions">
-	<button class:show_ma onclick={showMoreActions} class={i > 0 ? 'tooltip-top' : 'tooltip-left'} data-tooltip="More actions">
+	<button class:show_ma onclick={showMoreActions} class={task.i > 0 ? 'tooltip-top' : 'tooltip-left'} data-tooltip="More actions">
 		<i class="fas fa-ellipsis-vertical"></i>
 	</button>
 	<ul class="more-actions-ul" class:show_ma>
@@ -30,9 +30,13 @@
 			<i class="far fa-calendar"></i>
 			Pick a date
 		</li>
+		<li onclick={() => websocket.send({__e: 'p', i: task.i, n: task.n})}>
+		<i class="fas fa-thumbtack"></i>
+			Pin
+		</li>
 		<li style="color: crimson">
 			<i class="far fa-trash-can"></i>
-			{p ? 'Permanently delete' : 'Delete task'}
+			{task.p ? 'Permanently delete' : 'Delete task'}
 		</li>
 	</ul>
 </div>
