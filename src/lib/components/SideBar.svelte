@@ -207,7 +207,14 @@
 			{/each}
 			<hr />
 			{#each i.pinned_tasks as task (task.i)}
-				<a href="#" class="menu-items">
+				<a
+					onclick={() => {
+						i.parent_task = task;
+						i.mode = 'p';
+					}}
+					href="#"
+					class="menu-items"
+				>
 					<i class="fas fa-bars"></i>
 					<span class="menu-name">{task.n}</span>
 					<span class="list-amount">{task.c}</span>

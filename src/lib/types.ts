@@ -24,4 +24,11 @@ export interface User {
 	// p: string; // This seems to be a position field, not needed for User authentication context.
 }
 
-export type Mode = 't' | 'x' | 'c' | 'a' | 's' | 'y' | 'p';
+export type Mode = 
+ | 't' // trash
+ | 'x' // important
+ | 'c' // completed
+ | 'a' // all tasks
+ | 's' // search results
+ | 'y' // today
+ | 'p'; // parent task

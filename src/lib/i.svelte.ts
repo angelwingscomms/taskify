@@ -3,6 +3,7 @@ import type { Mode, Task } from './types';
 
 class App {
   tasks: Task[] = $state([]);
+  p: Task[] = $state([]);
   pinned_tasks: (Pick<Task, 'i' | 'n'> & { c: number })[] = $state([]);
 	mode: Mode = $state('a');
 	search: string = $state('');
@@ -38,7 +39,6 @@ class App {
     const res = await axios.post('/search', { f: {a: this.current_task.i}});
 		if (res.statusText === 'OK') return res.data;
 	});
-	p = $state(0);
 }
 
 export const i = new App();

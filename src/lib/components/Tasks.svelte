@@ -35,7 +35,7 @@ https://svelte.dev/e/js_parse_error -->
 
 	// $offlineTasks = [];
 	i.tasks = t;
-	i.p = Math.max(...i.tasks.map((task) => task.p), 0);
+	// i.p = Math.max(...i.tasks.map((task) => task.p), 0);
 	// // ? [...$page.data.tasks, ...$offlineTasks].sort((a, b) => b.d - a.d)
 	// // : $offlineTasks.sort((a, b) => b.d - a.d);
 
@@ -57,12 +57,14 @@ https://svelte.dev/e/js_parse_error -->
 			if (data.__e) {
 				switch (data.__e) {
 					case 'p':
-						i.pinned_tasks.push(data.d);
+						if (!i.pinned_tasks.find((task) => task.i === data.d.i)) {
+							i.pinned_tasks.push({ c: 0, ...data.d });
+						}
 						break;
 					case 'pa': {
 						const targetPinnedTask = i.pinned_tasks.find((task) => task.i === data.i);
 						if (targetPinnedTask) {
-							targetPinnedTask.c = data.c;
+							targetPinnedTask.c++;
 						}
 						break;
 					}
@@ -107,13 +109,21 @@ https://svelte.dev/e/js_parse_error -->
 				n: name,
 				i: v7(),
 				o: true,
-				p: i.p++,
+				// p: i.p++,
 				d: Date.now() /*, id: 'offline-' + $nextOfflineId++  */
 			};
 			if (i.mode === 'y') task.y = 1;
-			i.tasks = [...i.tasks, task];
+			if (i.mode === 'p' && i.parent_task) {
+				i.p = [...i.p, task];
+				let pt = i.pinned_tasks.find(t => t.i === i.parent_task?.i)
+				if (pt) pt.c++
+				// if (websocket) websocket.send(JSON.stringify({ __e: 'pa', i: i.parent_task.i }));
+				task.a = [i.parent_task.i];
+			} else {
+				i.tasks = [...i.tasks, task];
+				if (websocket) websocket.send(JSON.stringify(task));
+			}
 			name = '';
-			if (websocket) websocket.send(JSON.stringify(task));
 			$taskInput?.focus();
 			scrollContent(osTaskList);
 
@@ -121,7 +131,7 @@ https://svelte.dev/e/js_parse_error -->
 				await axios.post('/', task);
 			} catch (error) {
 				console.log('failed to add task to cloud', error);
-				alert('failed to add task to cloud');
+				// alert('failed to add task to cloud');
 			}
 		}
 	}
@@ -159,7 +169,7 @@ https://svelte.dev/e/js_parse_error -->
 				await axios.delete('/?i=' + id);
 			} catch (error) {
 				console.error('Error deleting task:', error);
-				alert('Failed to delete task.');
+				// alert('Failed to delete task.');
 			}
 		} else {
 			// If the task does not have an ID, it's an unsynced offline task.
@@ -347,13 +357,16 @@ https://svelte.dev/e/js_parse_error -->
 
 <div class="task-area-cont">
 	<div class="task-header">
-	{#if i.mode === 'p' && i.parent_task}
-	<i class="fa-solid fa-sitemap header-icon"></i>
-		<span class="header-span">Subtasks of {i.parent_task.n}</span>
-	{:else}
-		<i class="{modes[i.mode].icon_classes} header-icon"></i>
-		<span class="header-span">{modes[i.mode].text}</span>
-	{/if}
+		{#if i.mode === 'p' && i.parent_task}
+			<i class="fa-solid fa-sitemap header-icon"></i>
+			<span class="header-span">
+				<span class="subtasks-of-prefix">Subtasks of</span>
+				<span class="parent-task-name"> {i.parent_task.n}</span>
+			</span>
+		{:else}
+			<i class="{modes[i.mode].icon_classes} header-icon"></i>
+			<span class="header-span">{modes[i.mode].text}</span>
+		{/if}
 	</div>
 
 	<OverlayScrollbarsComponent bind:this={osTaskList} style="flex: 1 0 0;" defer>
@@ -369,7 +382,9 @@ https://svelte.dev/e/js_parse_error -->
 						{websocket}
 						{task}
 						{i}
-						onclick={() => toggle_task_prop(task)}
+						onclick={(e) => {
+							if (e.currentTarget === e.target) toggle_task_prop(task);
+						}}
 					/>
 				{/each}
 			</ul>{:catch}
@@ -421,3 +436,17 @@ https://svelte.dev/e/js_parse_error -->
 	ontouchstart={handleTouchStart}
 	{show_prop_lg}
 />
+
+<style>
+	.subtasks-of-prefix {
+		font-weight: normal;
+		color: var(--clr-main);
+		opacity: 0.7;
+		font-size: 0.9em;
+	}
+
+	.parent-task-name {
+		font-weight: bold;
+		color: var(--clr-main);
+	}
+</style>
