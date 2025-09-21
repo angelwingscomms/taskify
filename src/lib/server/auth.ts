@@ -1,21 +1,28 @@
-import { Google } from 'arctic';
-import { GOOGLE_ID, GOOGLE_SECRET, GOOGLE_REDIRECT_URL } from '$env/static/private';
-import { get, search_by_payload, edit_point, delete_ } from '$lib/db';
+import { SECRET } from '$env/static/private';
+import {
+	get,
+	delete_,
+	create,
+	edit_point,
+	new_id
+} from '$lib/db';
 import type { User } from '$lib/types';
-import { v7 } from 'uuid';
 import type { RequestEvent } from '@sveltejs/kit';
-import bcrypt from 'bcrypt';
+import * as oslo_encoding from '@oslojs/encoding';
 
 export const sessionCookieName = 'auth_session';
+export const sessionJwtCookieName =
+	'auth_session_jwt';
 
-interface Session {
+const SESSION_JWT_TTL_SECONDS = 24 * 60; // 24 minutes
+
+export interface Session {
 	s: 'se';
-	i: string; // session id
 	u: string; // user id
 	h: string; // hash (base64)
 	c: number; // created at
 	l: number; // last activity
-	expiresAt: Date;
+	[key: string]: unknown; // Allow arbitrary keys for Qdrant payload compatibility
 }
 
 export interface SessionValidationResult {
@@ -24,9 +31,11 @@ export interface SessionValidationResult {
 }
 
 const ACTIVITY_CHECK_INTERVAL = 1440; // milliseconds
-const INACTIVITY_TIMEOUT = 777600 * 1000; // milliseconds
+const INACTIVITY_TIMEOUT = 31536000 * 1000; // milliseconds (1 year)
 
-export async function validateSessionToken(token: string): Promise<SessionValidationResult> {
+export async function validateSessionToken(
+	token: string
+): Promise<SessionValidationResult> {
 	// console.log('[validateSessionToken] - Function started.');
 	// console.log(`[validateSessionToken] - Received token: ${token ? 'present' : 'null/undefined'}`);
 
@@ -66,11 +75,15 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 
 		// Verify session secret
 		// console.log(`[validateSessionToken] - Hashing provided session secret.`);
-		const tokenSecretHash = await hashSecret(sessionSecret);
+		const tokenSecretHash =
+			await hashSecret(sessionSecret);
 		// console.log(`[validateSessionToken] - Converting stored hash from Base64.`);
 		const storedHash = base64ToUint8(session.h);
 		// console.log(`[validateSessionToken] - Comparing hashes using constantTimeEqual.`);
-		const isValid = constantTimeEqual(tokenSecretHash, storedHash);
+		const isValid = constantTimeEqual(
+			tokenSecretHash,
+			storedHash
+		);
 		// console.log(`[validateSessionToken] - Session secret validation result: ${isValid}.`);
 
 		if (!isValid) {
@@ -80,13 +93,17 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 		// console.log(`[validateSessionToken] - Session secret is valid.`);
 
 		// Update activity if enough time has passed
-		const timeSinceLastActivityUpdate = now - session.l;
+		const timeSinceLastActivityUpdate =
+			now - session.l;
 		// console.log(`[validateSessionToken] - Checking activity update interval. Time since last update: ${timeSinceLastActivityUpdate}ms. Check interval: ${ACTIVITY_CHECK_INTERVAL}ms.`);
-		if (timeSinceLastActivityUpdate >= ACTIVITY_CHECK_INTERVAL) {
+		if (
+			timeSinceLastActivityUpdate >=
+			ACTIVITY_CHECK_INTERVAL
+		) {
 			// console.log(`[validateSessionToken] - Enough time has passed, updating session ${sessionId} last activity.`);
 			session.l = now;
 			// console.log(`[validateSessionToken] - Upserting session ${sessionId} to update last activity to ${session.l}.`);
-			await edit_point(session);
+			await edit_point(sessionId, session);
 			// console.log(`[validateSessionToken] - Session ${sessionId} activity updated successfully.`);
 		} else {
 			// console.log(`[validateSessionToken] - Not enough time has passed to update session ${sessionId} activity.`);
@@ -94,7 +111,17 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 
 		// Get user
 		// console.log(`[validateSessionToken] - Attempting to get user by ID: ${session.u}.`);
-		const user = await get<User>(session.u);
+		const user = await get<User>(session.u, [
+			't',
+			'av',
+			'd',
+			'a',
+			'g',
+			'l',
+			'n',
+			'r',
+			'rt'
+		]);
 		// console.log('session--', session)
 		// console.log(`[validateSessionToken] - User retrieved: ${user ? 'found' : 'not found'}.`);
 		if (!user) {
@@ -106,7 +133,10 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 		// console.log(`[validateSessionToken] - User found: ${user.t} (tag).`);
 
 		// console.log(`[validateSessionToken] - Session and user successfully validated. Returning results.`);
-		return { session, user: { ...user, i: session.u } };
+		return {
+			session,
+			user: { ...user, i: session.u }
+		};
 	} catch (error) {
 		console.error(
 			`[validateSessionToken] - Session validation error for session ID ${sessionId || 'unknown'}:`,
@@ -116,43 +146,74 @@ export async function validateSessionToken(token: string): Promise<SessionValida
 	}
 }
 
-export async function createSession(userId: string): Promise<string> {
+export async function createSession(
+	userId: string
+): Promise<string> {
 	const now = Date.now();
-	const sessionId = v7();
+	const sessionId = new_id();
 	const secret = generateSecureRandomString();
 	const hash = await hashSecret(secret);
 	const hashBase64 = uint8ToBase64(hash);
 
 	const session: Session = {
 		s: 'se',
-		i: sessionId,
 		u: userId,
 		h: hashBase64,
 		c: now,
-		l: now,
-		expiresAt: new Date(now + INACTIVITY_TIMEOUT)
+		l: now
 	};
 
-	await edit_point(session);
+	await create(session, undefined, sessionId);
 	return `${sessionId}.${secret}`;
 }
 
-export async function invalidateSession(sessionId: string): Promise<void> {
+export async function invalidateSession(
+	sessionId: string
+): Promise<void> {
 	await delete_(sessionId);
 }
 
-export function setSessionTokenCookie(event: RequestEvent, token: string): void {
+export function setSessionTokenCookie(
+	event: RequestEvent,
+	token: string
+): void {
 	event.cookies.set(sessionCookieName, token, {
 		path: '/',
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'lax'
-		// expires: expiresAt
+		sameSite: 'lax',
+		maxAge: INACTIVITY_TIMEOUT / 1000 // Convert milliseconds to seconds
 	});
 }
 
-export function deleteSessionTokenCookie(event: RequestEvent): void {
+export function setSessionJwtCookie(
+	event: RequestEvent,
+	jwt: string
+): void {
+	event.cookies.set(sessionJwtCookieName, jwt, {
+		path: '/',
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax',
+		maxAge: SESSION_JWT_TTL_SECONDS
+	});
+}
+
+export function deleteSessionTokenCookie(
+	event: RequestEvent
+): void {
 	event.cookies.delete(sessionCookieName, {
+		path: '/',
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		sameSite: 'lax'
+	});
+}
+
+export function deleteSessionJwtCookie(
+	event: RequestEvent
+): void {
+	event.cookies.delete(sessionJwtCookieName, {
 		path: '/',
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
@@ -162,7 +223,8 @@ export function deleteSessionTokenCookie(event: RequestEvent): void {
 
 // Helper functions
 function generateSecureRandomString(): string {
-	const alphabet = 'abcdefghijklmnpqrstuvwxyz23456789';
+	const alphabet =
+		'abcdefghijklmnpqrstuvwxyz23456789';
 	const bytes = new Uint8Array(24);
 	crypto.getRandomValues(bytes);
 
@@ -173,9 +235,16 @@ function generateSecureRandomString(): string {
 	return id;
 }
 
-async function hashSecret(secret: string): Promise<Uint8Array> {
-	const secretBytes = new TextEncoder().encode(secret);
-	const secretHashBuffer = await crypto.subtle.digest('SHA-256', secretBytes);
+async function hashSecret(
+	secret: string
+): Promise<Uint8Array> {
+	const secretBytes = new TextEncoder().encode(
+		secret
+	);
+	const secretHashBuffer = await crypto.subtle.digest(
+		'SHA-256',
+		secretBytes
+	);
 	return new Uint8Array(secretHashBuffer);
 }
 
@@ -198,7 +267,10 @@ function base64ToUint8(str: string): Uint8Array {
 	return arr;
 }
 
-function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+function constantTimeEqual(
+	a: Uint8Array,
+	b: Uint8Array
+): boolean {
 	if (a.length !== b.length) return false;
 	let result = 0;
 	for (let i = 0; i < a.length; i++) {
@@ -207,12 +279,173 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 	return result === 0;
 }
 
-const SALT_ROUNDS = 10;
+// ===== Stateless JWT (HS256) =====
 
-export async function hash_password(password: string): Promise<string> {
-	return await bcrypt.hash(password, SALT_ROUNDS);
+async function getJwtHS256Key(): Promise<CryptoKey> {
+	// Derive a 32-byte key deterministically from an env secret
+	const material = new TextEncoder().encode(
+		SECRET ?? ''
+	);
+	const hash = await crypto.subtle.digest(
+		'SHA-256',
+		material
+	);
+	const keyBytes = new Uint8Array(hash); // 32 bytes
+	return crypto.subtle.importKey(
+		'raw',
+		keyBytes,
+		{ name: 'HMAC', hash: 'SHA-256' },
+		false,
+		['sign', 'verify']
+	);
 }
 
-export async function verify_password(password: string, hash: string): Promise<boolean> {
-	return await bcrypt.compare(password, hash);
+export interface ValidatedSession {
+	id: string;
+	createdAt: Date;
+	issuedAt: Date;
+	expiresAt: Date;
+}
+
+export async function createSessionJWTFromToken(
+	token: string
+): Promise<string> {
+	const [sessionId] = token.split('.');
+	if (!sessionId)
+		throw new Error('Invalid session token');
+	const session = await get<Session>(sessionId);
+	if (!session) throw new Error('Session not found');
+	return createSessionJWT({
+		id: sessionId,
+		createdAt: new Date(session.c)
+	});
+}
+
+export async function createSessionJWT(session: {
+	id: string;
+	createdAt: Date;
+}): Promise<string> {
+	const now = new Date();
+	const header = {
+		alg: 'HS256',
+		typ: 'JWT'
+	} as const;
+	const body = {
+		session: {
+			id: session.id,
+			created_at: Math.floor(
+				session.createdAt.getTime() / 1000
+			)
+		},
+		iat: Math.floor(now.getTime() / 1000),
+		exp:
+			Math.floor(now.getTime() / 1000) +
+			SESSION_JWT_TTL_SECONDS
+	};
+
+	const headerJSON = JSON.stringify(header);
+	const bodyJSON = JSON.stringify(body);
+	const encodedHeader = oslo_encoding.encodeBase64url(
+		new TextEncoder().encode(headerJSON)
+	);
+	const encodedBody = oslo_encoding.encodeBase64url(
+		new TextEncoder().encode(bodyJSON)
+	);
+	const headerAndBody = `${encodedHeader}.${encodedBody}`;
+	const hmacKey = await getJwtHS256Key();
+	const signature = await crypto.subtle.sign(
+		'HMAC',
+		hmacKey,
+		new TextEncoder().encode(headerAndBody)
+	);
+	const encodedSignature =
+		oslo_encoding.encodeBase64url(
+			new Uint8Array(signature)
+		);
+	return `${headerAndBody}.${encodedSignature}`;
+}
+
+export async function validateSessionJWT(
+	jwt: string
+): Promise<ValidatedSession | null> {
+	const now = Date.now();
+	const parts = jwt.split('.');
+	if (parts.length !== 3) return null;
+
+	// Parse header
+	let header;
+	try {
+		const headerJSON = new TextDecoder().decode(
+			oslo_encoding.decodeBase64url(parts[0])
+		);
+		header = JSON.parse(headerJSON);
+		if (typeof header !== 'object' || header === null)
+			return null;
+	} catch {
+		return null;
+	}
+	if (
+		(header.typ && header.typ !== 'JWT') ||
+		header.alg !== 'HS256'
+	)
+		return null;
+
+	// Verify signature
+	let validSig = false;
+	try {
+		const hmacKey = await getJwtHS256Key();
+		const signatureBytes =
+			oslo_encoding.decodeBase64url(parts[2]);
+		validSig = await crypto.subtle.verify(
+			'HMAC',
+			hmacKey,
+			signatureBytes.buffer as unknown as ArrayBuffer,
+			new TextEncoder().encode(
+				parts[0] + '.' + parts[1]
+			)
+		);
+	} catch {
+		return null;
+	}
+	if (!validSig) return null;
+
+	// Parse body
+	let body;
+	try {
+		const bodyJSON = new TextDecoder().decode(
+			oslo_encoding.decodeBase64url(parts[1])
+		);
+		body = JSON.parse(bodyJSON);
+		if (typeof body !== 'object' || body === null)
+			return null;
+	} catch {
+		return null;
+	}
+
+	if (typeof body.exp !== 'number') return null;
+	if (now >= body.exp * 1000) return null;
+
+	if (
+		!body.session ||
+		typeof body.session !== 'object'
+	)
+		return null;
+	const s = body.session;
+	if (
+		typeof s.id !== 'string' ||
+		typeof s.created_at !== 'number'
+	)
+		return null;
+
+	const issuedAt =
+		typeof body.iat === 'number'
+			? new Date(body.iat * 1000)
+			: new Date(0);
+	const expiresAt = new Date(body.exp * 1000);
+	return {
+		id: s.id,
+		createdAt: new Date(s.created_at * 1000),
+		issuedAt,
+		expiresAt
+	};
 }

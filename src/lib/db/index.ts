@@ -2,10 +2,10 @@
 
 import { QDRANT_KEY, QDRANT_URL } from '$env/static/private';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { v7 as uuidv7 } from 'uuid';
 import { collection } from '$lib/constants';
 import type { User } from '$lib/types';
 import { embed } from '$lib/util/embed';
+import { new_id } from '$lib/util/new_id';
 
 export type PayloadFilter = Record<string, unknown>;
 
@@ -16,7 +16,7 @@ export const qdrant = new QdrantClient({
 });
 
 export async function getfirst<T>(filters: PayloadFilter): Promise<T | null> {
-	const results = await search_by_payload<T>(filters, 1);
+	const results = await search_by_payload<T>(filters, [], 1);
 	if (results.length > 0) {
 		return results[0];
 	}
@@ -24,9 +24,7 @@ export async function getfirst<T>(filters: PayloadFilter): Promise<T | null> {
 }
 
 // Utility functions
-export function generateId(): string {
-	return uuidv7();
-}
+export { new_id } from '$lib/util/new_id';
 
 export const set = async (id: string, payload: Record<string, unknown>) => {
 	await qdrant.setPayload('i', {
@@ -37,30 +35,31 @@ export const set = async (id: string, payload: Record<string, unknown>) => {
 };
 
 // Database operations wrapper
-export async function edit_point<T>(data: T): Promise<T & { i: string }> {
-	const i = data.i || generateId();
-
+export async function edit_point<T extends Record<string, unknown>>(
+	i: string,
+	data: T
+): Promise<T & { i: string }> {
 	const vector = new Array(3072).fill(0);
 
-	await qdrant.upsert(collection, {
-		points: [
-			{
-				id: i,
-				payload: { ...data },
-				vector
-			}
-		],
+	await qdrant.setPayload(collection, {
+		points: [i],
+		payload: data,
 		wait: true
+	});
+
+	await qdrant.updateVectors(collection, {
+		points: [{ id: i, vector }]
 	});
 
 	return { ...data, i };
 }
 
-export async function create<T extends { i?: string; id?: string; s: string }>(
+export async function create<T extends { s: string }>(
 	payload: T,
-	string_to_embed: string
+	string_to_embed?: string,
+	i?: string
 ): Promise<string> {
-	const id = generateId();
+	const id = i || new_id();
 
 	let vector: number[] = [];
 
@@ -84,34 +83,93 @@ export async function create<T extends { i?: string; id?: string; s: string }>(
 	return id;
 }
 
-export const format_filter = (filters: PayloadFilter) => {
-	return {
-		must: Object.entries(filters)
-			.filter(([, value]) => value !== undefined && value !== null && value !== '')
-			.map(([key, value]) => ({
-				key,
-				match: { value }
-			}))
+export const format_filter = (
+	must?: Record<string, unknown> | Array<Record<string, unknown>>,
+	must_not?: Record<string, unknown> | Array<Record<string, unknown>>
+) => {
+	const normalize = (input?: Record<string, unknown> | Array<Record<string, unknown>>) => {
+		if (!input) return undefined;
+		if (Array.isArray(input)) return input;
+		return Object.entries(input)
+			.filter(([, v]) => v !== undefined && v !== null && v !== '')
+			.map(([k, v]) => {
+				if (typeof v === 'object' && v !== null) {
+					const o = v as Record<string, unknown>;
+					if ('match' in o || 'range' in o || 'in' in o || 'is_null' in o || 'has_id' in o) {
+						return { key: k, ...(o as object) };
+					}
+				}
+				return { key: k, match: { value: v } };
+			});
 	};
+
+	const result: Record<string, unknown> = {};
+	const m = normalize(must);
+	if (m && m.length) result.must = m;
+	const mn = normalize(must_not);
+	if (mn && mn.length) result.must_not = mn;
+	return result;
 };
 
-export async function search_by_payload<T>(filter: PayloadFilter, limit?: number): Promise<T[]> {
+export async function count(filter: PayloadFilter): Promise<number> {
+	try {
+		const result = await qdrant.count(collection, {
+			filter: format_filter(filter),
+			exact: true
+		});
+		return result.count;
+	} catch (error) {
+		console.error('Error in count:', error);
+		console.error('arg:', filter);
+		throw error;
+	}
+}
+
+export async function search_by_payload<T>(
+	filter: PayloadFilter,
+	with_payload?: string[] | boolean,
+	limit?: number,
+	order_by?: string | Record<string, string>
+): Promise<T[]> {
 	const actual_limit = limit || 144;
 	try {
-		const results = await qdrant.scroll(collection, {
-			filter: format_filter(filter),
-			limit: actual_limit,
-			with_payload: true,
-			with_vector: false
-		});
-		
+		let results;
+
+		// If ordering is requested, use search with a dummy vector
+		// Otherwise, use scroll for better performance
+		if (order_by) {
+			// Create a dummy vector for payload-only search
+			const dummyVector = new Array(3072).fill(0);
+			const orderByObj = typeof order_by === 'string' ? { key: order_by } : order_by;
+
+			results = await qdrant.search(collection, {
+				vector: dummyVector,
+				limit: actual_limit,
+				with_payload,
+				filter: format_filter(filter),
+				with_vector: false,
+				...(orderByObj && { order_by: orderByObj })
+			});
+		} else {
+			results = await qdrant.scroll(collection, {
+				filter: format_filter(filter),
+				limit: actual_limit,
+				with_payload,
+				with_vector: false
+			});
+		}
 
 		// console.debug('search_by_payload results', results);
 
-		return results.points.map((point) => ({ ...(point.payload as T), i: point.id }));
+		// Handle both search and scroll result formats
+		const points = 'points' in results ? results.points : results;
+		return points.map((point) => ({
+			...(point.payload as T),
+			i: point.id
+		}));
 	} catch (error) {
 		console.error('Error in search_by_payload:', error);
-		console.error('Filters:', filter);
+		console.error('arg:', filter, with_payload, limit, order_by);
 		throw error;
 	}
 }
@@ -125,47 +183,59 @@ export async function search_by_vector<T>({
 	vector: number[];
 	with_payload?: string[];
 	limit?: number;
-	filter?: Record<string, unknown>;
+	filter?: {
+		must: Record<string, unknown>;
+		must_not?: Record<string, unknown>;
+	};
 }): Promise<T[]> {
-	try {
-		const searchParams: Record<string, unknown> = {
-			vector,
-			limit,
-			with_payload,
-			with_vector: false
-		};
+	const searchParams: Record<string, unknown> = {
+		vector,
+		limit,
+		with_payload,
+		with_vector: false
+	};
 
-		if (filter) {
-			searchParams.filter = format_filter(filter);
-		}
-
-		const results = await qdrant.search(collection, searchParams);
-
-		return results.map((point) => ({ ...(point.payload as T), i: point.id }));
-	} catch (error) {
-		console.error('Error in search_by_vector:', error);
-		console.error('Vector length:', vector.length);
-		console.error('Filter:', filter);
-		throw error;
+	if (filter) {
+		searchParams.filter = format_filter(filter.must, filter.must_not);
 	}
+	const results = await qdrant.search(
+		collection,
+		searchParams as {
+			vector: number[] | { name: string; vector: number[] };
+			limit?: number;
+			with_payload?: boolean | string[];
+			with_vector?: boolean;
+			filter?: Record<string, unknown>;
+		}
+	);
+
+	return results.map((point) => ({
+		...(point.payload as T),
+		i: point.id,
+		score: point.score
+	}));
 }
 
 export async function get<T>(
 	id: string,
-	payload?: string[],
+	payload?: string[] | string | boolean,
 	with_vector?: boolean
 ): Promise<T | null> {
 	try {
 		const result = await qdrant.retrieve(collection, {
 			ids: [id],
-			with_payload: payload ? payload : true,
+			with_payload: typeof payload === 'string' ? [payload] : payload,
 			with_vector
 		});
 
 		if (result.length > 0) {
-			const res = result[0].payload as T & { vector: number[] };
-			if (with_vector) {
-				res.vector = result[0].vector;
+			const res = result[0].payload as T & {
+				vector: number[];
+			};
+			if (with_vector && Array.isArray(result[0].vector)) {
+				res.vector = result[0].vector as unknown as number[];
+			} else if (payload && result[0].payload && typeof payload === 'string') {
+				return result[0].payload[payload] as T;
 			}
 			return res;
 		}
@@ -188,12 +258,12 @@ export async function update_point<T>(id: string, data: Partial<T>): Promise<voi
 		throw new Error('Document not found');
 	}
 
-	await edit_point({ ...existing, ...data, i: id });
+	await edit_point(id, { ...existing, ...data });
 }
 
 export const exists = async (i: string): Promise<boolean> => {
-  return !!(await get(i, []));
-}
+	return !!(await get(i, []));
+};
 
 // Get username from their ID
 export async function get_username_from_id(userId: string): Promise<string> {

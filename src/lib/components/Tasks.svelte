@@ -18,7 +18,6 @@ https://svelte.dev/e/js_parse_error -->
 		taskInput
 	} from '$lib/stores';
 	import type { Task as _Task, Mode } from '$lib/types';
-	import { PUBLIC_WORKER } from '$env/static/public';
 	import { i } from '$lib/i.svelte';
 	import { modes } from '$lib/constants';
 	import TaskProperties from './TaskProperties.svelte';
@@ -44,7 +43,7 @@ https://svelte.dev/e/js_parse_error -->
 	// Sidebar styling can be enhanced here if needed
 
 	$effect(() => {
-		websocket = new WebSocket('ws' + PUBLIC_WORKER + '/' + 'tasks');
+		websocket = new WebSocket('ws' + '.' + '/' + 'tasks');
 
 		websocket.onopen = () => {
 			console.log('WebSocket connection opened.');

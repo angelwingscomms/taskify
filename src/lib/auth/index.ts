@@ -1,15 +1,16 @@
-import { delete_, get, searchByPayload, upsertPoint } from '$lib/db';
-import type { User } from '$lib/types';
+import {
+	delete_,
+	get,
+	edit_point,
+	create,
+	new_id
+} from '$lib/db';
 
 export { create_user } from './create_user';
 
-import { Google } from 'arctic';
-import { GOOGLE_ID, GOOGLE_REDIRECT_URL, GOOGLE_SECRET } from '$env/static/private';
-import { v7 } from 'uuid';
-
-export const google = new Google(GOOGLE_ID, GOOGLE_SECRET, GOOGLE_REDIRECT_URL);
-
-export async function requireAuth(locals: App.Locals) {
+export async function requireAuth(
+	locals: App.Locals
+) {
 	if (!locals.user) {
 		return {
 			n: '',
@@ -24,7 +25,8 @@ export async function requireAuth(locals: App.Locals) {
 
 function generateSecureRandomString(): string {
 	// Human readable alphabet (a-z, 0-9 without l, o, 0, 1 to avoid confusion)
-	const alphabet = 'abcdefghijklmnpqrstuvwxyz23456789';
+	const alphabet =
+		'abcdefghijklmnpqrstuvwxyz23456789';
 
 	// Generate 24 bytes = 192 bits of entropy.
 	// We're only going to use 5 bits per byte so the total entropy will be 192 * 5 / 8 = 120 bits
@@ -60,10 +62,12 @@ function base64ToUint8(str: string): Uint8Array {
 	return arr;
 }
 
-export const createSession = async (u: string): Promise<SessionWithToken> => {
+export const createSession = async (
+	u: string
+): Promise<SessionWithToken> => {
 	const now = Date.now();
 
-	const i = v7();
+	const i = new_id();
 	const secret = generateSecureRandomString();
 	const h = await hashSecret(secret);
 	const h_b64 = uint8ToBase64(h);
@@ -78,14 +82,21 @@ export const createSession = async (u: string): Promise<SessionWithToken> => {
 		t: i + '.' + secret
 	};
 
-	await upsertPoint(session);
+	await create(session);
 
 	return session;
 };
 
-async function hashSecret(secret: string): Promise<Uint8Array> {
-	const secretBytes = new TextEncoder().encode(secret);
-	const secretHashBuffer = await crypto.subtle.digest('SHA-256', secretBytes);
+async function hashSecret(
+	secret: string
+): Promise<Uint8Array> {
+	const secretBytes = new TextEncoder().encode(
+		secret
+	);
+	const secretHashBuffer = await crypto.subtle.digest(
+		'SHA-256',
+		secretBytes
+	);
 	return new Uint8Array(secretHashBuffer);
 }
 
@@ -93,7 +104,7 @@ export interface SessionWithToken extends Session {
 	t: string;
 }
 
-interface Session {
+interface Session extends Record<string, unknown> {
 	s: string;
 	i: string;
 	u: string;
@@ -105,7 +116,9 @@ interface Session {
 const activityCheckInterval = 1440;
 const inactivityTimeoutSeconds = 777600;
 
-export async function validateSessionToken(token: string): Promise<Session | null> {
+export async function validateSessionToken(
+	token: string
+): Promise<Session | null> {
 	const now = Date.now();
 	const tokenParts = token.split('.');
 	if (tokenParts.length !== 2) return null;
@@ -113,21 +126,27 @@ export async function validateSessionToken(token: string): Promise<Session | nul
 	const session = await getSession(sessionId);
 	if (!session) return null;
 
-	const tokenSecretHash = await hashSecret(sessionSecret);
+	const tokenSecretHash =
+		await hashSecret(sessionSecret);
 	if (typeof session.h !== 'string') return null;
 	const storedHash = base64ToUint8(session.h);
-	const equal = constantTimeEqual(tokenSecretHash, storedHash);
+	const equal = constantTimeEqual(
+		tokenSecretHash,
+		storedHash
+	);
 	if (!equal) return null;
 	// Activity check: update lastVerifiedAt if enough time has passed
 	if (now - session.l >= activityCheckInterval) {
 		session.l = now;
-		await upsertPoint(session);
+		await edit_point(session.i, session);
 	}
 
 	return session;
 }
 
-export async function getSession(sessionId: string): Promise<Session | null> {
+export async function getSession(
+	sessionId: string
+): Promise<Session | null> {
 	const now = Date.now();
 	const session = await get<Session>(sessionId);
 
@@ -137,7 +156,10 @@ export async function getSession(sessionId: string): Promise<Session | null> {
 	}
 
 	// Inactivity timeout
-	if (now - session.l >= inactivityTimeoutSeconds * 1000) {
+	if (
+		now - session.l >=
+		inactivityTimeoutSeconds * 1000
+	) {
 		await delete_(sessionId);
 		return null;
 	}
@@ -145,7 +167,10 @@ export async function getSession(sessionId: string): Promise<Session | null> {
 	return session;
 }
 
-function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+function constantTimeEqual(
+	a: Uint8Array,
+	b: Uint8Array
+): boolean {
 	if (a.length !== b.length) return false;
 	let result = 0;
 	for (let i = 0; i < a.length; i++) {
