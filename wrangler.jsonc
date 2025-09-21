@@ -1,0 +1,38 @@
+{
+	"name": "i",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"r2_buckets": [
+		{
+			"binding": "R2",
+			"bucket_name": "iri"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"build": {
+		"command": "npm run build"
+	},
+	"services": [{ "binding": "r", "service": "r" }]
+	// ,"durable_objects": {
+	// 	"bindings": [
+	// 		{
+	// 			"name": "R",
+	// 			"class_name": "R"
+	// 		}
+	// 	]
+	// },
+	// "migrations": [
+	// 	{
+	// 		"tag": "v1",
+	// 		"new_sqlite_classes": ["R"]
+	// 	}
+	// ]
+}
